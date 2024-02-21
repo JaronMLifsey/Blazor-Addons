@@ -1,0 +1,15 @@
+﻿@page "/"
+
+<FileUpload @ref=Instance> </FileUpload>
+
+
+
+@code {
+    private FileUpload Instance;
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        Instance.TestMethod();
+    }
+}
