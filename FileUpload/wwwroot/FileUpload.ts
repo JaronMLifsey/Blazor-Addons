@@ -35,12 +35,12 @@ class FileUploader {
 
         function GetDataSlice() {
             if (fileInfo.chunk.length - fileInfo.chunkOffset > maxBytes) {
-                let slice = fileInfo.chunk.slice(fileInfo.chunkOffset, maxBytes);
+                let slice = fileInfo.chunk.slice(fileInfo.chunkOffset, fileInfo.chunkOffset + maxBytes);
                 fileInfo.chunkOffset += maxBytes;
                 return slice;
             }
             else {
-                let slice = fileInfo.chunk.slice(fileInfo.chunkOffset, fileInfo.chunk.length - fileInfo.chunkOffset);
+                let slice = fileInfo.chunk.slice(fileInfo.chunkOffset, fileInfo.chunk.length);
                 fileInfo.chunkOffset = 0;
                 fileInfo.chunk = null;
                 return slice;

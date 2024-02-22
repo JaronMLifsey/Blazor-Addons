@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Diagnostics;
+using System.Linq;
+using static BlazorFileUpload.FrontEndFileStream;
 
 namespace BlazorFileUpload
 {
@@ -20,7 +22,7 @@ namespace BlazorFileUpload
 
         private ElementReference Input;
         private IJSObjectReference Module = null!;
-        private IJSObjectReference FileUploadJs = null!;
+        private IJSObjectReference FileUploadJsObject = null!;
 
         private List<FrontEndFile> Files = new();
 
@@ -29,36 +31,26 @@ namespace BlazorFileUpload
             if (firstRender)
             {
                 Module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorFileUpload/FileUpload.js");
-                FileUploadJs = await Module.InvokeAsync<IJSObjectReference>("CreateFileUploader", Input, DotNetObjectReference.Create(this));
+                FileUploadJsObject = await Module.InvokeAsync<IJSObjectReference>("CreateFileUploader", Input, DotNetObjectReference.Create(this));
             }
         }
 
         [JSInvokable]
-        public void OnFilesChanged(dynamic[] files)
+        public void OnFilesChanged(System.Text.Json.JsonElement[] files)
         {
             Files = files.Select(x => new FrontEndFile(
                 manager: this,
-                fileName: x.FileName,
-                fileSizeBytes: x.FileSizeBytes,
-                iD: x.ID
+                fileName: x.GetProperty("FileName").GetString() ?? throw new Exception("Failed to parse JSON object"),
+                fileSizeBytes: x.GetProperty("FileSizeBytes").GetInt64(),
+                id: x.GetProperty("ID").GetInt32()
             )).ToList();
 
             FilesChanged.InvokeAsync(Files);
         }
-        private void UpdateHeading()
-        {
-            Debug.WriteLine("Test");
-        }
 
-        internal async Task<Stream> CreateStream(FrontEndFile file, long maxSize = 1024 * 1024 * 128)
+        internal FrontEndFileStream CreateStream(FrontEndFile file, IProgress<CopyProgress>? progressListener, double reportFrequency = 0.01, int maxMessageSize = 1024 * 31)
         {
-            var dataReference = await FileUploadJs.InvokeAsync<byte[]>("ReadFile");
-            return await dataReference.OpenReadStreamAsync(maxAllowedSize: maxSize);
-        }
-
-        public void TestMethod()
-        {
-            Debug.WriteLine("Test");
+            return new FrontEndFileStream(FileUploadJsObject, file, progressListener, reportFrequency);
         }
 
         public async ValueTask DisposeAsync()
@@ -67,9 +59,9 @@ namespace BlazorFileUpload
             {
                 await Module.DisposeAsync();
             }
-            if (FileUploadJs != null)
+            if (FileUploadJsObject != null)
             {
-                await FileUploadJs.DisposeAsync();
+                await FileUploadJsObject.DisposeAsync();
             }
         }
     }

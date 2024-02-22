@@ -1,6 +1,8 @@
 ﻿@page "/"
 
-<FileUpload @ref=Instance> </FileUpload>
+<FileUpload @ref=@Instance FilesChanged="@OnFilesChanged">
+
+</FileUpload>
 
 
 
@@ -10,6 +12,26 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        Instance.TestMethod();
+
+    }
+
+    private async Task OnFilesChanged(IEnumerable<FrontEndFile> files){
+        if (!files.Any())
+        {
+            return;
+        }
+        var file = files.First();
+        var filePath = "C:\\Users\\Jaron\\Desktop\\test\\TEST__" + file.FileName;
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+        var contents = await file.GetAllContents();
+        await File.WriteAllBytesAsync(filePath, contents);
+
+        // using var fileStream = File.Create(filePath);
+        // using var downloadStream = file.CreateStream();
+        // await downloadStream.CopyToAsync(fileStream);
+        // fileStream.Close();
     }
 }
