@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using System.Diagnostics;
 using System.Linq;
@@ -10,6 +11,8 @@ namespace BlazorFileUpload
     {
         [Inject]
         private IJSRuntime JsRuntime { get; set; } = default!;
+        [Inject]
+        private ILogger<FileUpload>? Logger { get; set; } = default!;
 
         [Parameter]
         public bool Multiple { get; set; } = false;
@@ -55,7 +58,7 @@ namespace BlazorFileUpload
                 throw new Exception("A stream cannot be created until after the first render.");
             }
 
-            return new FrontEndFileStream(FileUploadJsObject, file, progressListener: progressListener, reportFrequency: reportFrequency, maxMessageSize: maxMessageSize, maxBuffer: maxBuffer);
+            return new FrontEndFileStream(Logger, FileUploadJsObject, file, progressListener: progressListener, reportFrequency: reportFrequency, maxMessageSize: maxMessageSize, maxBuffer: maxBuffer);
         }
 
         public async ValueTask DisposeAsync()

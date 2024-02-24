@@ -8,22 +8,22 @@ class FileStreamer {
         this.MaxMessageSize = maxMessageSize;
         this.MaxBufferSize = maxBufferSize;
     }
-    async ReadFile(reader, maxBytes) {
-        function GetDataSlice() {
-            if (this.FileInfo.chunk.length - this.FileInfo.chunkOffset > maxBytes) {
-                let slice = this.FileInfo.chunk.slice(this.FileInfo.chunkOffset, this.FileInfo.chunkOffset + maxBytes);
-                this.FileInfo.chunkOffset += maxBytes;
-                return slice;
-            }
-            else {
-                let slice = this.FileInfo.chunk.slice(this.FileInfo.chunkOffset, this.FileInfo.chunk.length);
-                this.FileInfo.chunkOffset = 0;
-                this.FileInfo.chunk = null;
-                return slice;
-            }
+    GetDataSlice() {
+        if (this.FileInfo.chunk.length - this.FileInfo.chunkOffset > this.MaxMessageSize) {
+            let slice = this.FileInfo.chunk.slice(this.FileInfo.chunkOffset, this.FileInfo.chunkOffset + this.MaxMessageSize);
+            this.FileInfo.chunkOffset += this.MaxMessageSize;
+            return slice;
         }
+        else {
+            let slice = this.FileInfo.chunk.slice(this.FileInfo.chunkOffset, this.FileInfo.chunk.length);
+            this.FileInfo.chunkOffset = 0;
+            this.FileInfo.chunk = null;
+            return slice;
+        }
+    }
+    async ReadFile(reader, maxBytes) {
         if (this.FileInfo.chunk != null) {
-            return GetDataSlice();
+            return this.GetDataSlice();
         }
         let result = await reader.read();
         if (result.done) {
@@ -31,7 +31,7 @@ class FileStreamer {
         }
         var data = result.value;
         this.FileInfo.chunk = data;
-        return GetDataSlice();
+        return this.GetDataSlice();
     }
     async StreamFile() {
         let reader = this.FileInfo.file.stream().getReader();
@@ -47,10 +47,12 @@ class FileStreamer {
             this.TotalSent += data.length;
             remainingToSend -= data.length;
         }
+        //Let .NET know there's no more data.
+        this.DotNetStreamReceiver.invokeMethodAsync('ReceiveData', null, this.TotalSent);
     }
     Acknowledge(totalReceived) {
         this.TotalAcknowledged = totalReceived;
-        if (this.TotalSent - this.TotalAcknowledged > this.MaxBufferSize) {
+        if (this.TotalSent - this.TotalAcknowledged + this.MaxMessageSize < this.MaxBufferSize) {
             this.StreamContinuationResolver();
         }
     }

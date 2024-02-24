@@ -1,10 +1,12 @@
-﻿using Microsoft.JSInterop;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using System.Threading.Tasks.Dataflow;
 
 namespace BlazorFileUpload
 {
     public class FrontEndFileStream : Stream
     {
+        private readonly ILogger? Logger;
         private readonly FrontEndFile File;
         private readonly IProgress<long>? ProgressListener;
         private readonly double ReportFrequency;
@@ -20,14 +22,16 @@ namespace BlazorFileUpload
         private bool ReceivingComplete = false;
 
         public bool ErrorFileNotAvailable { get; private set; } = false;
+        public bool ErrorDisconnected { get; private set; } = false;
 
         public DotNetObjectReference<FrontEndFileStream>? ThisObjectReference { private set; get; }
 
         private readonly IJSObjectReference FileUploadJsObject;
         private IJSObjectReference? FileStreamerJsObject = null;
 
-        public FrontEndFileStream(IJSObjectReference jsObject, FrontEndFile file, IProgress<long>? progressListener = null, double reportFrequency = 0.01, int maxMessageSize = 1024 * 32, long maxBuffer = 1024 * 256)
+        public FrontEndFileStream(ILogger? logger, IJSObjectReference jsObject, FrontEndFile file, IProgress<long>? progressListener = null, double reportFrequency = 0.01, int maxMessageSize = 1024 * 32, long maxBuffer = 1024 * 256)
         {
+            Logger = logger;
             FileUploadJsObject = jsObject;
             File = file;
             ProgressListener = progressListener;
@@ -49,10 +53,26 @@ namespace BlazorFileUpload
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
+            if (ReadingCopmlete)
+            {
+                return 0;
+            }
+
             if (ThisObjectReference == null)
             {
                 ThisObjectReference = DotNetObjectReference.Create(this);
-                FileStreamerJsObject = await FileUploadJsObject.InvokeAsync<IJSObjectReference>("CreateStream", ThisObjectReference, File.ID, MaxMessageSize, MaxBuffer);
+
+                try
+                {
+                    FileStreamerJsObject = await FileUploadJsObject.InvokeAsync<IJSObjectReference>("CreateStream", ThisObjectReference, File.ID, MaxMessageSize, MaxBuffer);
+                }
+                catch (Exception ex)
+                {
+                    Logger?.LogWarning("The following exception occurred when creating a JavaScript stream: " + ex.ToString());
+                    ReadingCopmlete = true;
+                    ErrorDisconnected = true;
+                    return 0;
+                }
 
                 if (FileStreamerJsObject == null)//File not found.
                 {
@@ -61,15 +81,21 @@ namespace BlazorFileUpload
                     return 0;
                 }
 
-                await FileUploadJsObject.InvokeVoidAsync("StreamFile");
+                _ = FileStreamerJsObject.InvokeVoidAsync("StreamFile");
             }
 
             int written = 0;
-            while (written < count && !ReadingCopmlete)
+            while (count > 0 && !ReadingCopmlete)
             {
                 if (CurrentBuffer == null)
                 {
-                    CurrentBuffer = await BufferQueue.ReceiveAsync();
+                    var data = await BufferQueue.ReceiveAsync();
+                    if (data != null)
+                    {
+                        CurrentlyBuffered -= data.Length;
+                        _ = FileStreamerJsObject!.InvokeVoidAsync("Acknowledge", TotalReceived - CurrentlyBuffered);
+                        CurrentBuffer = data;
+                    }
                 }
 
                 if (CurrentBuffer == null)
@@ -77,17 +103,15 @@ namespace BlazorFileUpload
                     ReadingCopmlete = true;
                     break;
                 }
-                else
-                {
-                    CurrentlyBuffered -= CurrentBuffer.Value.Length;
-                }
 
                 var bytesToCopy = Math.Min(CurrentBuffer.Value.Length, count);
 
                 if (written + bytesToCopy > File.FileSizeBytes)
                 {
                     //We're getting more data than expected. Don't proceed lest a malicious actor send endless data.
-                    throw new Exception($"Received more data than the maximum expected of {File.FileSizeBytes} bytes for file {File.FileName}.");
+                    var message = $"Received more data than the maximum expected of {File.FileSizeBytes} bytes for file {File.FileName}.";
+                    Logger?.LogError(message);
+                    throw new Exception(message);
                 }
 
                 CurrentBuffer.Value.Slice(0, bytesToCopy).CopyTo(new Memory<byte>(buffer, offset, bytesToCopy));
@@ -100,7 +124,7 @@ namespace BlazorFileUpload
                 {
                     CurrentBuffer = null;
                 }
-                else//This implied that bytesToCopy == count and so written will now == count
+                else//This implies that bytesToCopy == count and so written will now == count
                 {
                     CurrentBuffer = CurrentBuffer.Value.Slice(bytesToCopy);
                 }
@@ -115,7 +139,7 @@ namespace BlazorFileUpload
                 }
             }
 
-            if (written == 0)//Report final result.
+            if (ReadingCopmlete)//Report final result.
             {
                 ProgressListener?.Report(_Position);
             }
@@ -126,6 +150,20 @@ namespace BlazorFileUpload
         [JSInvokable]
         public void ReceiveData(byte[]? data, long totalSent)
         {
+            if (totalSent != TotalReceived)
+            {
+                //JSInterop is single threaded so this should never happen.;
+                var message = "Fundamental assumption proved false - Data received out of order.";
+                Logger?.LogError(message);
+                throw new Exception(message);
+            }
+            if (FileStreamerJsObject == null)
+            {
+                var message = "Data received before streaming was requested. This should not be possible.";
+                Logger?.LogError(message);
+                throw new Exception(message);
+            }
+
             if (data == null)
             {
                 if (!ReceivingComplete)
@@ -139,18 +177,14 @@ namespace BlazorFileUpload
             if (CurrentlyBuffered + data.Length > MaxBuffer)
             {
                 //Should be impossible if the program is working correctly, unless there's a malicious attack in which case kill the client connection.
-                throw new Exception("Program error occurred. Too much data was received from JavaScript.");
+                var message = "Too much data was received from JavaScript.";
+                Logger?.LogError(message);
+                throw new Exception(message);
             }
 
-            BufferQueue.Post(data);
             CurrentlyBuffered += data.Length;
             TotalReceived += data.Length;
-            if (totalSent != TotalReceived)
-            {
-                //JSInterop is single threaded so this should never happen.
-                throw new Exception("Fundamental assumption proved false - Data received out of order.");
-            }
-            FileUploadJsObject.InvokeVoidAsync("Acknowledge", TotalReceived);
+            BufferQueue.Post(data);
         }
 
         public override int Read(byte[] buffer, int offset, int count) => throw new NotImplementedException("ReadAsync must be used instead.");
