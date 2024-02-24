@@ -1,32 +1,39 @@
 ﻿using Microsoft.JSInterop;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace BlazorFileUpload
 {
     public class FrontEndFileStream : Stream
     {
-        public record CopyProgress (long Coppied, long Total);
         private readonly FrontEndFile File;
-        private readonly IProgress<CopyProgress>? ProgressListener;
+        private readonly IProgress<long>? ProgressListener;
         private readonly double ReportFrequency;
         private readonly int MaxMessageSize;
         private double LastReportedProgress = 0.0;
         long _Position;
+        long TotalReceived = 0;
+        long CurrentlyBuffered = 0;
+        long MaxBuffer;
+        private BufferBlock<byte[]?> BufferQueue = new();
+        private Memory<byte>? CurrentBuffer;
+        private bool ReadingCopmlete = false;
+        private bool ReceivingComplete = false;
 
-        private readonly IJSObjectReference JsObject;
+        public bool ErrorFileNotAvailable { get; private set; } = false;
 
-        public FrontEndFileStream(IJSObjectReference jsObject, FrontEndFile file, IProgress<CopyProgress>? progressListener, double reportFrequency = 0.01, int maxMessageSize = 1024 * 31)
+        public DotNetObjectReference<FrontEndFileStream>? ThisObjectReference { private set; get; }
+
+        private readonly IJSObjectReference FileUploadJsObject;
+        private IJSObjectReference? FileStreamerJsObject = null;
+
+        public FrontEndFileStream(IJSObjectReference jsObject, FrontEndFile file, IProgress<long>? progressListener = null, double reportFrequency = 0.01, int maxMessageSize = 1024 * 32, long maxBuffer = 1024 * 256)
         {
-            JsObject = jsObject;
+            FileUploadJsObject = jsObject;
             File = file;
             ProgressListener = progressListener;
             ReportFrequency = reportFrequency;
             MaxMessageSize = maxMessageSize;
+            MaxBuffer = maxBuffer;
         }
 
         public override bool CanRead => true;
@@ -42,23 +49,108 @@ namespace BlazorFileUpload
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            //TODO split writes to buffer into chunks if count is > MaxMessageSize
-            var bytes = await JsObject.InvokeAsync<byte[]?>("ReadFile", cancellationToken, File.ID, count);
-            if (bytes == null)
+            if (ThisObjectReference == null)
             {
-                return 0;
+                ThisObjectReference = DotNetObjectReference.Create(this);
+                FileStreamerJsObject = await FileUploadJsObject.InvokeAsync<IJSObjectReference>("CreateStream", ThisObjectReference, File.ID, MaxMessageSize, MaxBuffer);
+
+                if (FileStreamerJsObject == null)//File not found.
+                {
+                    ReadingCopmlete = true;
+                    ErrorFileNotAvailable = true;
+                    return 0;
+                }
+
+                await FileUploadJsObject.InvokeVoidAsync("StreamFile");
             }
 
-            bytes.CopyTo(buffer, offset);
-            _Position += bytes.Length;
-            var completePercentage = (double)_Position / File.FileSizeBytes;
-
-            if (ProgressListener != null && (_Position >= File.FileSizeBytes || Math.Abs(completePercentage - LastReportedProgress) >= ReportFrequency))
+            int written = 0;
+            while (written < count && !ReadingCopmlete)
             {
-                ProgressListener.Report(new CopyProgress(_Position, File.FileSizeBytes));
-                LastReportedProgress = completePercentage;
+                if (CurrentBuffer == null)
+                {
+                    CurrentBuffer = await BufferQueue.ReceiveAsync();
+                }
+
+                if (CurrentBuffer == null)
+                {
+                    ReadingCopmlete = true;
+                    break;
+                }
+                else
+                {
+                    CurrentlyBuffered -= CurrentBuffer.Value.Length;
+                }
+
+                var bytesToCopy = Math.Min(CurrentBuffer.Value.Length, count);
+
+                if (written + bytesToCopy > File.FileSizeBytes)
+                {
+                    //We're getting more data than expected. Don't proceed lest a malicious actor send endless data.
+                    throw new Exception($"Received more data than the maximum expected of {File.FileSizeBytes} bytes for file {File.FileName}.");
+                }
+
+                CurrentBuffer.Value.Slice(0, bytesToCopy).CopyTo(new Memory<byte>(buffer, offset, bytesToCopy));
+
+                written += bytesToCopy;
+                offset += bytesToCopy;
+                count -= bytesToCopy;
+
+                if (bytesToCopy == CurrentBuffer.Value.Length)
+                {
+                    CurrentBuffer = null;
+                }
+                else//This implied that bytesToCopy == count and so written will now == count
+                {
+                    CurrentBuffer = CurrentBuffer.Value.Slice(bytesToCopy);
+                }
+
+                _Position += bytesToCopy;
+                var completePercentage = (double)_Position / File.FileSizeBytes;
+
+                if (ProgressListener != null && Math.Abs(completePercentage - LastReportedProgress) >= ReportFrequency)
+                {
+                    ProgressListener.Report(_Position);
+                    LastReportedProgress = completePercentage;
+                }
             }
-            return bytes.Length;
+
+            if (written == 0)//Report final result.
+            {
+                ProgressListener?.Report(_Position);
+            }
+
+            return written;
+        }
+
+        [JSInvokable]
+        public void ReceiveData(byte[]? data, long totalSent)
+        {
+            if (data == null)
+            {
+                if (!ReceivingComplete)
+                {
+                    BufferQueue.Post(null);
+                    ReceivingComplete = true;
+                }
+                return;
+            }
+
+            if (CurrentlyBuffered + data.Length > MaxBuffer)
+            {
+                //Should be impossible if the program is working correctly, unless there's a malicious attack in which case kill the client connection.
+                throw new Exception("Program error occurred. Too much data was received from JavaScript.");
+            }
+
+            BufferQueue.Post(data);
+            CurrentlyBuffered += data.Length;
+            TotalReceived += data.Length;
+            if (totalSent != TotalReceived)
+            {
+                //JSInterop is single threaded so this should never happen.
+                throw new Exception("Fundamental assumption proved false - Data received out of order.");
+            }
+            FileUploadJsObject.InvokeVoidAsync("Acknowledge", TotalReceived);
         }
 
         public override int Read(byte[] buffer, int offset, int count) => throw new NotImplementedException("ReadAsync must be used instead.");
@@ -78,5 +170,15 @@ namespace BlazorFileUpload
         }
         public override void SetLength(long value) => throw new NotImplementedException("Only reading is possible.");
         public override void Write(byte[] buffer, int offset, int count) => throw new NotImplementedException("Only reading is possible.");
+
+        public override async ValueTask DisposeAsync()
+        {
+            ThisObjectReference?.Dispose();
+            if (FileStreamerJsObject != null)
+            {
+                await FileStreamerJsObject.DisposeAsync();
+            }
+            await base.DisposeAsync();
+        }
     }
 }

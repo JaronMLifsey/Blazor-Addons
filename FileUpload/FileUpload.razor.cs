@@ -21,8 +21,8 @@ namespace BlazorFileUpload
         public RenderFragment<IReadOnlyCollection<FrontEndFile>>? ChildContent { get; set; }
 
         private ElementReference Input;
-        private IJSObjectReference Module = null!;
-        private IJSObjectReference FileUploadJsObject = null!;
+        private IJSObjectReference? Module;
+        private IJSObjectReference? FileUploadJsObject;
 
         private List<FrontEndFile> Files = new();
 
@@ -48,20 +48,32 @@ namespace BlazorFileUpload
             FilesChanged.InvokeAsync(Files);
         }
 
-        internal FrontEndFileStream CreateStream(FrontEndFile file, IProgress<CopyProgress>? progressListener, double reportFrequency = 0.01, int maxMessageSize = 1024 * 31)
+        internal FrontEndFileStream CreateStream(FrontEndFile file, IProgress<long>? progressListener, double reportFrequency, int maxMessageSize, long maxBuffer)
         {
-            return new FrontEndFileStream(FileUploadJsObject, file, progressListener, reportFrequency);
+            if (FileUploadJsObject == null)
+            {
+                throw new Exception("A stream cannot be created until after the first render.");
+            }
+
+            return new FrontEndFileStream(FileUploadJsObject, file, progressListener: progressListener, reportFrequency: reportFrequency, maxMessageSize: maxMessageSize, maxBuffer: maxBuffer);
         }
 
         public async ValueTask DisposeAsync()
         {
-            if (Module != null)
+            try
             {
-                await Module.DisposeAsync();
+                if (Module != null)
+                {
+                    await Module.DisposeAsync();
+                }
+                if (FileUploadJsObject != null)
+                {
+                    await FileUploadJsObject.DisposeAsync();
+                }
             }
-            if (FileUploadJsObject != null)
+            catch (JSDisconnectedException ex)
             {
-                await FileUploadJsObject.DisposeAsync();
+                // Ignore
             }
         }
     }
