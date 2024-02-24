@@ -27,11 +27,11 @@
         {
             File.Delete(filePath);
         }
-        var before = DateTime.Now;
-        var contents = await file.GetAllContents();
-        var after = DateTime.Now;
-        Debug.WriteLine(after - before);
-        await File.WriteAllBytesAsync(filePath, contents);
+        if (files.Count() > 1)
+        {
+            var contents = await file.GetAllContents();
+            await File.WriteAllBytesAsync(filePath, contents);
+        }
 
         // using var fileStream = File.Create(filePath);
         // using var downloadStream = file.CreateStream();

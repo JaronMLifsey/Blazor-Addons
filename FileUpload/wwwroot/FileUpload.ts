@@ -115,14 +115,18 @@ class FileUploader {
                 this.FileMap.set(file.fileId, { file: file, chunk: null, chunkOffset: 0});
             }
         }
-
-        await this.DotNetObject.invokeMethodAsync('OnFilesChanged', Array.from(fileList).map(file => {
-            return {
-                FileName: file.name,
-                FileSizeBytes: file.size,
-                ID: file.fileId,
-            };
-        }));
+        await this.DotNetObject.invokeMethodAsync(
+            'OnFilesChanged',
+            Array.from(this.FileMap.values())
+                .map(fileInfo => fileInfo.file)
+                .map(file => {
+                    return {
+                        FileName: file.name,
+                        FileSizeBytes: file.size,
+                        ID: file.fileId,
+                    };
+                })
+        );
     }
 }
 
