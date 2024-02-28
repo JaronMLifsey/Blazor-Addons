@@ -87,16 +87,48 @@ class FileStreamer {
 }
 
 class FileUploader {
-    private Element: HTMLInputElement;
+    private Element: HTMLInputElement | null;
+    private DropzoneElement: HTMLElement | null;
     private DotNetObject: any;
     private FileIdCounter = 0;
     private FileMap = new Map<number, FileInfo>();
 
-    public async init(element: HTMLInputElement, dotNetObject: any) {
-        this.Element = element;
+    public async init(inputElement: HTMLInputElement | null, dropzoneElement: HTMLElement | null, dotNetObject: any) {
+        this.Element = inputElement;
+        this.DropzoneElement = dropzoneElement;
         this.DotNetObject = dotNetObject;
-        this.Element.addEventListener("change", this.handleFiles.bind(this), false);
-        await this.handleFiles(null);
+        this.Element?.addEventListener("change", () => {
+            this.handleFiles([...this.Element.files]);
+        });
+
+        if (this.DropzoneElement != null) {
+            this.DropzoneElement.ondragenter =
+            this.DropzoneElement.ondragover =
+                (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.DropzoneElement.classList.add("dragged-over");
+                };
+
+            this.DropzoneElement.ondragleave = (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.DropzoneElement.classList.remove("dragged-over");
+            };
+
+            this.DropzoneElement.ondrop = (event: DragEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.DropzoneElement.classList.remove("dragged-over");
+
+                if (event.dataTransfer.items) {
+                    this.handleFiles([...event.dataTransfer.items].filter(x => x.kind === "file").map(x => x.getAsFile()));
+                }
+                else {
+                    this.handleFiles([...event.dataTransfer.files]);
+                }
+            };
+        }
     }
 
     public async CreateStream(dotNetObj: any, fileId: number, maxMessageSize: number, maxBufferSize: number) {
@@ -107,17 +139,20 @@ class FileUploader {
         return new FileStreamer(dotNetObj, fileInfo, maxMessageSize, maxBufferSize);
     }
 
-    public async handleFiles(_: Event | null) {
-        const fileList = this.Element.files;
+    public async handleFiles(fileList: File[]) {
+        let fileInfoList: FileInfo[] = [];
+
         for (let file of fileList) {
             if (file.fileId == null) {
                 file.fileId = this.FileIdCounter++;
-                this.FileMap.set(file.fileId, { file: file, chunk: null, chunkOffset: 0});
+                let fileInfo: FileInfo = { file: file, chunk: null, chunkOffset: 0 };
+                fileInfoList.push(fileInfo);
+                this.FileMap.set(file.fileId, fileInfo);
             }
         }
         await this.DotNetObject.invokeMethodAsync(
             'OnFilesChanged',
-            Array.from(this.FileMap.values())
+            fileInfoList
                 .map(fileInfo => fileInfo.file)
                 .map(file => {
                     return {
@@ -130,9 +165,9 @@ class FileUploader {
     }
 }
 
-async function CreateFileUploader(element: HTMLInputElement, dotNetObject: any){
+async function CreateFileUploader(inputElement: HTMLInputElement | null, dropzoneElement: HTMLElement | null, dotNetObject: any){
     let uploader = new FileUploader();
-    await uploader.init(element, dotNetObject);
+    await uploader.init(inputElement, dropzoneElement, dotNetObject);
     return uploader;
 }
 

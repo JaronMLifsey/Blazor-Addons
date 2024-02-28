@@ -1,9 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
-using System.Diagnostics;
-using System.Linq;
-using static BlazorFileUpload.FrontEndFileStream;
 
 namespace BlazorFileUpload
 {
@@ -21,37 +18,52 @@ namespace BlazorFileUpload
         public EventCallback<IEnumerable<FrontEndFile>> FilesChanged { get; set; }
 
         [Parameter]
-        public RenderFragment<IReadOnlyCollection<FrontEndFile>>? ChildContent { get; set; }
+        public EventCallback<FrontEndFile> FileAdded { get; set; }
 
-        private ElementReference Input;
+        [Parameter]
+        public EventCallback<FrontEndFile> FileDeleted { get; set; }
+
+        private ElementReference? Input;
+        private ElementReference? DropZone;
         private IJSObjectReference? Module;
         private IJSObjectReference? FileUploadJsObject;
 
         private List<FrontEndFile> Files = new();
+
+        public FileUpload()
+        {
+            RenderHelper = new(this);
+            ChildContent = DefaultRenderChildContent;
+            InnerRender = DefaultRenderInner;
+            FilesRender = DefaultRenderFiles;
+            FileRender = DefaultRenderFile;
+        }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender)
             {
                 Module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorFileUpload/FileUpload.js");
-                FileUploadJsObject = await Module.InvokeAsync<IJSObjectReference>("CreateFileUploader", Input, DotNetObjectReference.Create(this));
+                FileUploadJsObject = await Module.InvokeAsync<IJSObjectReference>("CreateFileUploader", Input, DropZone, DotNetObjectReference.Create(this));
             }
         }
 
         [JSInvokable]
         public void OnFilesChanged(System.Text.Json.JsonElement[] files)
         {
-            Files = files.Select(x => new FrontEndFile(
-                manager: this,
-                fileName: x.GetProperty("FileName").GetString() ?? throw new Exception("Failed to parse JSON object"),
-                fileSizeBytes: x.GetProperty("FileSizeBytes").GetInt64(),
-                id: x.GetProperty("ID").GetInt32()
-            )).ToList();
+            var newFiles = files.Select(x => new FrontEndFile(
+                    manager: this,
+                    fileName: x.GetProperty("FileName").GetString() ?? throw new Exception("Failed to parse JSON object"),
+                    fileSizeBytes: x.GetProperty("FileSizeBytes").GetInt64(),
+                    id: x.GetProperty("ID").GetInt32()
+                )).ToList();
+            Files.AddRange(newFiles);
 
             FilesChanged.InvokeAsync(Files);
+            newFiles.Select(x => FileAdded.InvokeAsync(x));
         }
 
-        internal FrontEndFileStream CreateStream(FrontEndFile file, IProgress<long>? progressListener, double reportFrequency, int maxMessageSize, long maxBuffer)
+        internal FrontEndFileStream CreateStream(FrontEndFile file, Action<long>? progressListener, double reportFrequency, int maxMessageSize, long maxBuffer)
         {
             if (FileUploadJsObject == null)
             {
@@ -59,6 +71,13 @@ namespace BlazorFileUpload
             }
 
             return new FrontEndFileStream(Logger, FileUploadJsObject, file, progressListener: progressListener, reportFrequency: reportFrequency, maxMessageSize: maxMessageSize, maxBuffer: maxBuffer);
+        }
+
+        public async Task DeleteFile(FrontEndFile file)
+        {
+            Files.Remove(file);
+            await FileDeleted.InvokeAsync();
+            StateHasChanged();
         }
 
         public async ValueTask DisposeAsync()

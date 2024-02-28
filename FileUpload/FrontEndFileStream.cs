@@ -8,7 +8,6 @@ namespace BlazorFileUpload
     {
         private readonly ILogger? Logger;
         private readonly FrontEndFile File;
-        private readonly IProgress<long>? ProgressListener;
         private readonly double ReportFrequency;
         private readonly int MaxMessageSize;
         private double LastReportedProgress = 0.0;
@@ -20,6 +19,7 @@ namespace BlazorFileUpload
         private Memory<byte>? CurrentBuffer;
         private bool ReadingCopmlete = false;
         private bool ReceivingComplete = false;
+        public Action<long>? OnDownloadProgress;
 
         public bool ErrorFileNotAvailable { get; private set; } = false;
         public bool ErrorDisconnected { get; private set; } = false;
@@ -29,12 +29,15 @@ namespace BlazorFileUpload
         private readonly IJSObjectReference FileUploadJsObject;
         private IJSObjectReference? FileStreamerJsObject = null;
 
-        public FrontEndFileStream(ILogger? logger, IJSObjectReference jsObject, FrontEndFile file, IProgress<long>? progressListener = null, double reportFrequency = 0.01, int maxMessageSize = 1024 * 32, long maxBuffer = 1024 * 256)
+        public FrontEndFileStream(ILogger? logger, IJSObjectReference jsObject, FrontEndFile file, Action<long>? progressListener = null, double reportFrequency = 0.01, int maxMessageSize = 1024 * 32, long maxBuffer = 1024 * 256)
         {
             Logger = logger;
             FileUploadJsObject = jsObject;
             File = file;
-            ProgressListener = progressListener;
+            if (progressListener != null)
+            {
+                OnDownloadProgress += progressListener;
+            }
             ReportFrequency = reportFrequency;
             MaxMessageSize = maxMessageSize;
             MaxBuffer = maxBuffer;
@@ -132,16 +135,16 @@ namespace BlazorFileUpload
                 _Position += bytesToCopy;
                 var completePercentage = (double)_Position / File.FileSizeBytes;
 
-                if (ProgressListener != null && Math.Abs(completePercentage - LastReportedProgress) >= ReportFrequency)
+                if (OnDownloadProgress != null && Math.Abs(completePercentage - LastReportedProgress) >= ReportFrequency)
                 {
-                    ProgressListener.Report(_Position);
+                    OnDownloadProgress(_Position);
                     LastReportedProgress = completePercentage;
                 }
             }
 
             if (ReadingCopmlete)//Report final result.
             {
-                ProgressListener?.Report(_Position);
+                OnDownloadProgress?.Invoke(_Position);
             }
 
             return written;

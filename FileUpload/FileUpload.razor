@@ -1,2 +1,84 @@
-﻿<input @ref="@Input" type="file" multiple="@Multiple"/>
+﻿@ChildContent(RenderHelper)
 
+@code {
+    [Parameter]
+    public RenderFragment<FileUploadRenderHelper> ChildContent { get; set; }
+
+    [Parameter]
+    public RenderFragment<FileUploadRenderHelper> InnerRender { get; set; }
+
+    [Parameter]
+    public RenderFragment<IEnumerable<FrontEndFile>> FilesRender { get; set; }
+
+    [Parameter]
+    public RenderFragment<FrontEndFile> FileRender { get; set; }
+
+
+    private RenderFragment DefaultRenderChildContent(FileUploadRenderHelper renderHelper)
+    {
+        return renderHelper.RenderDropZone();
+    }
+
+    private RenderFragment DefaultRenderInner(FileUploadRenderHelper renderHelper)
+    {
+        return
+        @<text>
+            <div class="file-upload-button-container">
+                @renderHelper.RenderButton("Drag and drop files or click here")
+            </div>
+            @FilesRender(Files)
+        </text>
+    ;
+    }
+
+    private RenderFragment DefaultRenderFiles(IEnumerable<FrontEndFile> files)
+    {
+        if (!files.Any()){
+            return@<text></text>;
+        }
+        return
+        @<div class="file-upload-file-container">
+            @foreach(var file in files){
+                @FileRender(file)
+            }
+        </div>;
+    }
+
+    private RenderFragment DefaultRenderFile(FrontEndFile file)
+    {
+        return@<DefaultFileRender File="@file" FileUpload="@this"></DefaultFileRender>;
+    }
+
+    private FileUploadRenderHelper RenderHelper;
+
+    public class FileUploadRenderHelper
+    {
+        internal FileUpload Component;
+
+        public FileUploadRenderHelper(FileUpload component)
+        {
+            Component = component;
+        }
+
+        public RenderFragment RenderDropZone()
+        {
+            return 
+            @<div @ref=@Component.DropZone class="file-upload-drop-zone">
+                @Component.InnerRender(this)
+            </div>
+    ;
+        }
+
+        public RenderFragment RenderButton(string text)
+        {
+            var id = Guid.NewGuid().ToString();
+            return 
+            @<text>
+                <label for="@id" class="file-upload-upload-button">@text</label>
+                <input id="@id" style="display: none;" @ref=@Component.Input type="file" title=" " multiple=@Component.Multiple />
+            </text>;
+        }
+
+        public IEnumerable<FrontEndFile> Files => Component.Files;
+    }
+}
