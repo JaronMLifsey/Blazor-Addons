@@ -7,9 +7,23 @@
     padding: 0.5rem;
     background-color: #e1e1e1;
     border-radius: 0.25rem;
+    position: relative;
 }
-
-.left-content{
+.file-upload-file > * {
+    z-index: 1;
+}
+.file-upload-file::before {
+    content: " ";
+    width: calc(100% * var(--percent));
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: #cbe5df;
+    height: 100%;
+    z-index: 0;
+    border-radius: 0.25rem;
+}
+.left-content {
     display: flex;
     gap: 1rem;
 }
