@@ -31,10 +31,10 @@ namespace BlazorFileUpload
 
 
         [Parameter]
-        public Func<FrontEndFile, List<string>>? FileValidation { get; set; }
+        public Func<FrontEndFile, List<string>?>? FileValidation { get; set; }
 
         [Parameter]
-        public Func<IReadOnlyList<FrontEndFile>, List<string>>? Validation { get; set; }
+        public Func<IReadOnlyList<FrontEndFile>?, List<string>>? Validation { get; set; }
 
         /// <summary>
         /// True if, when <see cref="Validate"/> was last called, <see cref="Errors"/> was empty and every file in <see cref="Files"/> was without error.
@@ -112,12 +112,12 @@ namespace BlazorFileUpload
             {
                 foreach (var file in Files)
                 {
-                    file.Errors = FileValidation.Invoke(file);
+                    file.Errors = FileValidation?.Invoke(file) ?? new();
                     isValid = isValid && !file.Errors.Any();
                 }
             }
 
-            _Errors = Validation != null ? Validation(Files) : new List<string>();
+            _Errors = Validation?.Invoke(Files) ?? new();
             isValid = isValid && !_Errors.Any();
 
             IsValid = isValid;

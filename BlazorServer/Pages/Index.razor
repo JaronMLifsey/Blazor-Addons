@@ -1,35 +1,40 @@
 ﻿@page "/"
 @using System.Diagnostics
 
-<FileUpload @ref=@Instance FilesChanged="@OnFilesChanged" Multiple="true" Validation="@Validation" FileValidation="@FileValidation" IncludeButton="true">
+<FileUpload @ref=@Instance 
+    FilesChanged="@OnFilesChanged"
+            Multiple="true" Validation="@Validation" FileValidation="@FileValidation" IncludeButton="true">
 
 </FileUpload>
 
-
+<button onclick="@ButtonClicked">test</button>
 
 @code {
     private FileUpload Instance;
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
 
     }
 
-    private List<string> Validation(IReadOnlyList<FrontEndFile> files)
+    private void ButtonClicked()
     {
+        
+    }
+
+    private List<string>? Validation(IReadOnlyList<FrontEndFile> files)
+    {
+        if (!files.Any())
+        {
+            return null;
+        }
         return new List<string>()
         {
             "This is an error"
         };
     }
-    private List<string> FileValidation(FrontEndFile file)
+    private List<string>? FileValidation(FrontEndFile file)
     {
-        return new List<string>()
-        {
-            "This is an error",
-            "asdfThis is an error",
-            "This is anasdf earror",
-        };
+        return null;
     }
 
     private async Task OnFilesChanged(IEnumerable<FrontEndFile> files){

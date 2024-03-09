@@ -57,9 +57,16 @@
         return
         @<text>
             @if(IncludeButton){
-                <div class="file-upload-button-container">
+                if(IncludeDropZone)
+                {
+                    <div class="file-upload-button-container">
+                        @renderHelper.RenderButton("Drag and drop files or click here")
+                    </div>
+                }
+                else
+                {
                     @renderHelper.RenderButton("Drag and drop files or click here")
-                </div>
+                }
             }
             else{
                 <p class="file-upload-drop-zone-text">Drag and drop files here</p>
@@ -111,8 +118,8 @@
         {
             return
             @<text>
-                <label for="@Id" aria-label="@ariaLabel" class="file-upload-upload-button">@text</label>
-                <input id="@Id" style="display: none;" @ref=@Component.Input type="file" title=" " multiple=@Component.Multiple />
+                <label @key="@Id" for="@Id" aria-label="@ariaLabel" class="file-upload-upload-button">@text</label>
+                <input @key="@("_" + Id)" id="@Id" style="display: none;" @ref=@Component.Input type="file" title=" " multiple=@Component.Multiple />
             </text>;
         }
 
