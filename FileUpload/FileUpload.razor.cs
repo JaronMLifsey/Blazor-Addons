@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using static BlazorFileUpload.FrontEndFile;
+using static BlazorFileUpload.FrontEndFileStream;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BlazorFileUpload
 {
@@ -15,7 +18,10 @@ namespace BlazorFileUpload
         public bool Multiple { get; set; } = false;
 
         [Parameter]
-        public EventCallback<IEnumerable<FrontEndFile>> FilesChanged { get; set; }
+        public List<FrontEndFile> Files { get; set; } = new();
+
+        [Parameter]
+        public EventCallback<List<FrontEndFile>> FilesChanged { get; set; }
 
         [Parameter]
         public EventCallback<FrontEndFile> FileAdded { get; set; }
@@ -23,12 +29,31 @@ namespace BlazorFileUpload
         [Parameter]
         public EventCallback<FrontEndFile> FileDeleted { get; set; }
 
+
+        [Parameter]
+        public Func<FrontEndFile, List<string>>? FileValidation { get; set; }
+
+        [Parameter]
+        public Func<IReadOnlyList<FrontEndFile>, List<string>>? Validation { get; set; }
+
+        /// <summary>
+        /// True if, when <see cref="Validate"/> was last called, <see cref="Errors"/> was empty and every file in <see cref="Files"/> was without error.
+        /// This is updated when files are added or deleted.
+        /// </summary>
+        public bool IsValid { get; internal set; } = true;
+
+        /// <summary>
+        /// The errors returned by <see cref="Validation"/>.
+        /// Errors returned by <see cref="FileValidation"/> are in each individual file in <see cref="Files"/>.
+        /// </summary>
+        public IReadOnlyList<string> Errors => _Errors;
+        public List<string> _Errors { get; set; }
+
+
         private ElementReference? Input;
         private ElementReference? DropZone;
         private IJSObjectReference? Module;
         private IJSObjectReference? FileUploadJsObject;
-
-        private List<FrontEndFile> Files = new();
 
         public FileUpload()
         {
@@ -51,19 +76,26 @@ namespace BlazorFileUpload
         [JSInvokable]
         public void OnFilesChanged(System.Text.Json.JsonElement[] files)
         {
-            var newFiles = files.Select(x => new FrontEndFile(
+            if (!files.Any())
+            {
+                return;
+            }
+
+            List<FrontEndFile> newFiles = files.Select(x => new FrontEndFile(
                     manager: this,
                     fileName: x.GetProperty("FileName").GetString() ?? throw new Exception("Failed to parse JSON object"),
                     fileSizeBytes: x.GetProperty("FileSizeBytes").GetInt64(),
                     id: x.GetProperty("ID").GetInt32()
                 )).ToList();
-            Files.AddRange(newFiles);
 
+            Files = Files.Concat(newFiles).ToList();
+            Validate();
+
+            newFiles.ForEach(x => FileAdded.InvokeAsync(x));
             FilesChanged.InvokeAsync(Files);
-            newFiles.Select(x => FileAdded.InvokeAsync(x));
         }
 
-        internal FrontEndFileStream CreateStream(FrontEndFile file, Action<long>? progressListener, double reportFrequency, int maxMessageSize, long maxBuffer)
+        internal FrontEndFileStream CreateStream(FrontEndFile file, DownloadProgressListener? progressListener, double reportFrequency, int maxMessageSize, long maxBuffer)
         {
             if (FileUploadJsObject == null)
             {
@@ -73,10 +105,32 @@ namespace BlazorFileUpload
             return new FrontEndFileStream(Logger, FileUploadJsObject, file, progressListener: progressListener, reportFrequency: reportFrequency, maxMessageSize: maxMessageSize, maxBuffer: maxBuffer);
         }
 
+        public void Validate()
+        {
+            bool isValid = true;
+            if (FileValidation != null)
+            {
+                foreach (var file in Files)
+                {
+                    file.Errors = FileValidation.Invoke(file);
+                    isValid = isValid && !file.Errors.Any();
+                }
+            }
+
+            _Errors = Validation != null ? Validation(Files) : new List<string>();
+            isValid = isValid && !_Errors.Any();
+
+            IsValid = isValid;
+        }
+
         public async Task DeleteFile(FrontEndFile file)
         {
             Files.Remove(file);
-            await FileDeleted.InvokeAsync();
+            Validate();
+            await Task.WhenAll(
+                FileDeleted.InvokeAsync(file),
+                FilesChanged.InvokeAsync(Files)
+            );
             StateHasChanged();
         }
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using System.Threading.Tasks.Dataflow;
+using static BlazorFileUpload.FrontEndFile;
 
 namespace BlazorFileUpload
 {
@@ -8,28 +9,43 @@ namespace BlazorFileUpload
     {
         private readonly ILogger? Logger;
         private readonly FrontEndFile File;
-        private readonly double ReportFrequency;
-        private readonly int MaxMessageSize;
         private double LastReportedProgress = 0.0;
-        long _Position;
-        long TotalReceived = 0;
-        long CurrentlyBuffered = 0;
-        long MaxBuffer;
+        private long _Position;
+        private long TotalReceived = 0;
+        private long CurrentlyBuffered = 0;
         private BufferBlock<byte[]?> BufferQueue = new();
         private Memory<byte>? CurrentBuffer;
-        private bool ReadingCopmlete = false;
         private bool ReceivingComplete = false;
-        public Action<long>? OnDownloadProgress;
+
+        public readonly int MaxMessageSize;
+        public readonly long MaxBuffer;
+
+        /// <summary>
+        /// How often to report progress in percent downloaded (1.0 is 100%).
+        /// </summary>
+        public double ReportFrequency;
+
+        public bool ReadingComplete { get; private set; } = false;
+
+        public delegate void DownloadProgressListener(long bytesDownloaded, bool downloadComplete);
+
+        /// <summary>
+        /// Reports the progress of a download in bytes and whether the file was fully downloaded (true).
+        /// </summary>
+        public DownloadProgressListener? OnDownloadProgress;
 
         public bool ErrorFileNotAvailable { get; private set; } = false;
         public bool ErrorDisconnected { get; private set; } = false;
+
+        public long BytesDownloaded => _Position;
+        public double PercentDownloaded => (double)_Position / File.FileSizeBytes;
 
         public DotNetObjectReference<FrontEndFileStream>? ThisObjectReference { private set; get; }
 
         private readonly IJSObjectReference FileUploadJsObject;
         private IJSObjectReference? FileStreamerJsObject = null;
 
-        public FrontEndFileStream(ILogger? logger, IJSObjectReference jsObject, FrontEndFile file, Action<long>? progressListener = null, double reportFrequency = 0.01, int maxMessageSize = 1024 * 32, long maxBuffer = 1024 * 256)
+        public FrontEndFileStream(ILogger? logger, IJSObjectReference jsObject, FrontEndFile file, DownloadProgressListener? progressListener = null, double reportFrequency = 0.01, int maxMessageSize = 1024 * 32, long maxBuffer = 1024 * 256)
         {
             Logger = logger;
             FileUploadJsObject = jsObject;
@@ -56,7 +72,7 @@ namespace BlazorFileUpload
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            if (ReadingCopmlete)
+            if (ReadingComplete)
             {
                 return 0;
             }
@@ -72,14 +88,14 @@ namespace BlazorFileUpload
                 catch (Exception ex)
                 {
                     Logger?.LogWarning("The following exception occurred when creating a JavaScript stream: " + ex.ToString());
-                    ReadingCopmlete = true;
+                    ReadingComplete = true;
                     ErrorDisconnected = true;
                     return 0;
                 }
 
                 if (FileStreamerJsObject == null)//File not found.
                 {
-                    ReadingCopmlete = true;
+                    ReadingComplete = true;
                     ErrorFileNotAvailable = true;
                     return 0;
                 }
@@ -88,7 +104,7 @@ namespace BlazorFileUpload
             }
 
             int written = 0;
-            while (count > 0 && !ReadingCopmlete)
+            while (count > 0 && !ReadingComplete)
             {
                 if (CurrentBuffer == null)
                 {
@@ -103,7 +119,7 @@ namespace BlazorFileUpload
 
                 if (CurrentBuffer == null)
                 {
-                    ReadingCopmlete = true;
+                    ReadingComplete = true;
                     break;
                 }
 
@@ -137,14 +153,14 @@ namespace BlazorFileUpload
 
                 if (OnDownloadProgress != null && Math.Abs(completePercentage - LastReportedProgress) >= ReportFrequency)
                 {
-                    OnDownloadProgress(_Position);
+                    OnDownloadProgress(_Position, false);
                     LastReportedProgress = completePercentage;
                 }
             }
 
-            if (ReadingCopmlete)//Report final result.
+            if (ReadingComplete)//Report final result.
             {
-                OnDownloadProgress?.Invoke(_Position);
+                OnDownloadProgress?.Invoke(_Position, true);
             }
 
             return written;

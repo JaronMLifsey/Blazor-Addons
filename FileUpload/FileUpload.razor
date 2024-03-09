@@ -1,4 +1,7 @@
-﻿@ChildContent(RenderHelper)
+﻿
+<div class="file-upload @InvalidClassStr @Class">
+    @ChildContent(RenderHelper)
+</div>
 
 @code {
     [Parameter]
@@ -13,19 +16,54 @@
     [Parameter]
     public RenderFragment<FrontEndFile> FileRender { get; set; }
 
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public bool IncludeDropZone { get; set; } = true;
+
+    [Parameter]
+    public bool IncludeButton { get; set; } = true;
+
+    [Parameter]
+    public bool ShowErrors { get; set; } = true;
+
+    /// <summary>
+    /// If true, and <see cref="IncludeButton"/> is false, then text will be displayed 
+    /// always - if false, it will only display when not files are present.
+    /// </summary>
+    [Parameter]
+    public bool AlwaysShowDropZoneText { get; set; } = true;
+
+    private string InvalidClassStr => IsValid ? string.Empty : "invalid";
 
     private RenderFragment DefaultRenderChildContent(FileUploadRenderHelper renderHelper)
     {
-        return renderHelper.RenderDropZone();
+        return
+        @<text>
+            @(IncludeDropZone ? renderHelper.RenderDropZone() : DefaultRenderInner(renderHelper))
+            @if(ShowErrors && !IsValid){
+                <div class="file-upload-errors-container">
+                    @foreach(var error in Errors){
+                        <p class="file-upload-overall-error">@error</p>
+                    }
+                </div>
+            }
+        </text>;
     }
 
     private RenderFragment DefaultRenderInner(FileUploadRenderHelper renderHelper)
     {
         return
         @<text>
-            <div class="file-upload-button-container">
-                @renderHelper.RenderButton("Drag and drop files or click here")
-            </div>
+            @if(IncludeButton){
+                <div class="file-upload-button-container">
+                    @renderHelper.RenderButton("Drag and drop files or click here")
+                </div>
+            }
+            else{
+                <p class="file-upload-drop-zone-text">Drag and drop files here</p>
+            }
             @FilesRender(Files)
         </text>
     ;
@@ -53,6 +91,7 @@
 
     public class FileUploadRenderHelper
     {
+        private string Id = Guid.NewGuid().ToString();
         internal FileUpload Component;
 
         public FileUploadRenderHelper(FileUpload component)
@@ -65,17 +104,15 @@
             return 
             @<div @ref=@Component.DropZone class="file-upload-drop-zone">
                 @Component.InnerRender(this)
-            </div>
-    ;
+            </div>;
         }
 
-        public RenderFragment RenderButton(string text)
+        public RenderFragment RenderButton(string text, string? ariaLabel = null)
         {
-            var id = Guid.NewGuid().ToString();
-            return 
+            return
             @<text>
-                <label for="@id" class="file-upload-upload-button">@text</label>
-                <input id="@id" style="display: none;" @ref=@Component.Input type="file" title=" " multiple=@Component.Multiple />
+                <label for="@Id" aria-label="@ariaLabel" class="file-upload-upload-button">@text</label>
+                <input id="@Id" style="display: none;" @ref=@Component.Input type="file" title=" " multiple=@Component.Multiple />
             </text>;
         }
 

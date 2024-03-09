@@ -1,7 +1,7 @@
 ﻿@page "/"
 @using System.Diagnostics
 
-<FileUpload @ref=@Instance FilesChanged="@OnFilesChanged" Multiple="true">
+<FileUpload @ref=@Instance FilesChanged="@OnFilesChanged" Multiple="true" Validation="@Validation" FileValidation="@FileValidation" IncludeButton="true">
 
 </FileUpload>
 
@@ -10,10 +10,26 @@
 @code {
     private FileUpload Instance;
 
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
 
+    }
+
+    private List<string> Validation(IReadOnlyList<FrontEndFile> files)
+    {
+        return new List<string>()
+        {
+            "This is an error"
+        };
+    }
+    private List<string> FileValidation(FrontEndFile file)
+    {
+        return new List<string>()
+        {
+            "This is an error",
+            "asdfThis is an error",
+            "This is anasdf earror",
+        };
     }
 
     private async Task OnFilesChanged(IEnumerable<FrontEndFile> files){
@@ -27,8 +43,8 @@
         {
             File.Delete(filePath);
         }
-        var contents = await file.GetAllContents();
-        await File.WriteAllBytesAsync(filePath, contents);
+        //var contents = await file.GetAllContents();
+        //await File.WriteAllBytesAsync(filePath, contents);
 
         // using var fileStream = File.Create(filePath);
         // using var downloadStream = file.CreateStream();

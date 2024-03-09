@@ -1,19 +1,41 @@
 ﻿@implements IDisposable
 
-<div class="file-upload-file" style="--percent: @Percent">
+<div class=@("file-upload-file" + (File.IsValid ? string.Empty : " invalid")) style="--percent: @Percent">
     <div class="left-content">
+        @if (!File.IsValid)
+        {
+            <svg class="file-upload-file-error-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+            </svg>
+        }
         @if (File.IsDownloading)
         {
             <p>@(Percent.ToString("P0"))</p>
         }
-        <p class="file-upload-file-name">@File.FileName</p>
+        @if (File.IsValid)
+        {
+            <p class="file-upload-file-name">@(File.RenamedFileName ?? File.FileName)</p>
+        }
+        else
+        {
+            <div class="file-upload-file-errors-container">
+                @foreach(var error in File.Errors)
+                {
+                    <p class="file-upload-file-error">@error</p>
+                }
+            </div>
+        }
     </div>
 
-    <button class="file-upload-delete-button" onclick=@(() => { _ = FileUpload.DeleteFile(File); }) disabled="@File.IsDownloading">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000">
-            <path d="M0 0h24v24H0z" fill="none" /><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-        </svg>
-    </button>
+    <div class="right-content">
+        <p>@FrontEndFile.BytesToString(File.FileSizeBytes)</p>
+        <button class="file-upload-file-delete-button" onclick=@(() => { _ = FileUpload.DeleteFile(File); }) disabled="@File.IsDownloading">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
+                <path d="M0 0h24v24H0z" fill="none" />
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+            </svg>
+        </button>
+    </div>
 </div>
 
 @code {
@@ -52,9 +74,9 @@
         }
     }
 
-    private void DownloadProgressMade(FrontEndFile file)
+    private void DownloadProgressMade(long bytesDownloaded, bool downloadComplete)
     {
-        Percent = (double)file.BytesDownloaded / file.FileSizeBytes;
+        Percent = Math.Min(1, (double)bytesDownloaded / File.FileSizeBytes);
         InvokeAsync(StateHasChanged);
     }
 }

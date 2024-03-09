@@ -9,6 +9,10 @@
     border-radius: 0.25rem;
     position: relative;
 }
+.file-upload-file.invalid{
+    background-color: var(--error-light);
+}
+
 .file-upload-file > * {
     z-index: 1;
 }
@@ -23,23 +27,48 @@
     z-index: 0;
     border-radius: 0.25rem;
 }
-.left-content {
+.left-content, .right-content {
     display: flex;
+    align-items: center;
+}
+.left-content {
+    gap: 0.5rem;
+}
+.right-content {
     gap: 1rem;
 }
 
 .file-upload-file p {
     margin: 0;
 }
-
-
-.file-upload-delete-button {
+.file-upload-file-errors-container{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.file-upload-file-error {
+    margin: 0;
+    line-height: 1;
+    color: var(--error-text);
+}
+.file-upload-file-delete-button {
     width: 2rem;
     aspect-ratio: 1;
     position: relative;
+    border-radius: 0.25rem;
+    border: 1px solid gray;
+    transition: all 250ms;
+    background-color: white;
+}
+.file-upload-file-delete-button:hover {
+    box-shadow: 4px 4px 10px 0px rgba(0,0,0,0.3);
+}
+.file-upload-file-delete-button:active {
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.3);
 }
 
-.file-upload-delete-button svg {
+
+.file-upload-file-delete-button svg {
     height: 1.4rem;
     position: absolute;
     top: 50%;
@@ -49,4 +78,8 @@
 
 button:disabled {
     opacity: 0.5;
+}
+
+.file-upload-file-error-icon {
+    color: var(--error-text);
 }
