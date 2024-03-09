@@ -7,9 +7,9 @@ namespace BlazorFileUpload
         private readonly FileUpload? Manager;
         public readonly string FileName;
         /// <summary>
-        /// Contains the name if the user renamed the file, or null if they didn't.
+        /// Contains the user-renamed file name. If the user never changed it, it will be the same as <see cref="FileName"/>.
         /// </summary>
-        public string? RenamedFileName;
+        public string RenamedFileName;
         /// <summary>
         /// This is the number of bytes which have been downloaded.
         /// It is automatically updated based on the progress of the stream returned 
@@ -57,6 +57,7 @@ namespace BlazorFileUpload
         {
             Manager = manager;
             FileName = fileName;
+            RenamedFileName = fileName;
             FileSizeBytes = fileSizeBytes;
             ID = id;
         }

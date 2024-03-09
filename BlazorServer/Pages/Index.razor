@@ -1,9 +1,13 @@
 ﻿@page "/"
 @using System.Diagnostics
 
-<FileUpload @ref=@Instance 
-    FilesChanged="@OnFilesChanged"
-            Multiple="true" Validation="@Validation" FileValidation="@FileValidation" IncludeButton="true">
+<FileUpload @ref=@Instance
+            FilesChanged="@OnFilesChanged"
+            Multiple="true"
+            Validation="@Validation"
+            FileValidation="@FileValidation"
+            IncludeButton="true"
+            AllowRenaming="true">
 
 </FileUpload>
 
@@ -18,7 +22,7 @@
 
     private void ButtonClicked()
     {
-        
+
     }
 
     private List<string>? Validation(IReadOnlyList<FrontEndFile> files)
@@ -37,7 +41,8 @@
         return null;
     }
 
-    private async Task OnFilesChanged(IEnumerable<FrontEndFile> files){
+    private async Task OnFilesChanged(IEnumerable<FrontEndFile> files)
+    {
         if (!files.Any())
         {
             return;

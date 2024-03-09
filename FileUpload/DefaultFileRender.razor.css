@@ -67,7 +67,6 @@
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.3);
 }
 
-
 .file-upload-file-delete-button svg {
     height: 1.4rem;
     position: absolute;
@@ -80,6 +79,36 @@ button:disabled {
     opacity: 0.5;
 }
 
+.file-upload-rename-container{
+    position: relative;
+}
 .file-upload-file-error-icon {
     color: var(--error-text);
+}
+.file-upload-rename-edit-icon {
+    color: inherit;
+    position: absolute;
+    right: 0px;
+    top: 50%;
+    height: 1.33em;
+    width: 1.33em;
+    transform: translateY(-50%);
+    pointer-events: none;
+    opacity: 33%;
+}
+.file-upload-rename-container:has(.file-upload-file-name.editable:focus-visible) .file-upload-rename-edit-icon {
+    opacity: 75%;
+}
+
+.file-upload-file-name.editable {
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.33);
+    margin: 0;
+    background-color: transparent;
+    padding: 0.25em 2em 0.25em 0.25em;
+}
+
+.file-upload-file-name.editable:focus-visible {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.75);
+    outline: none;
 }

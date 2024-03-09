@@ -29,6 +29,9 @@ namespace BlazorFileUpload
         [Parameter]
         public EventCallback<FrontEndFile> FileDeleted { get; set; }
 
+        [Parameter]
+        public EventCallback<FrontEndFile> FileRenamed { get; set; }
+
 
         [Parameter]
         public Func<FrontEndFile, List<string>?>? FileValidation { get; set; }

@@ -29,6 +29,18 @@
     public bool ShowErrors { get; set; } = true;
 
     /// <summary>
+    /// Allows renaming the file name. Default is false.
+    /// </summary>
+    [Parameter]
+    public bool AllowRenaming { get; set; } = false;
+
+    /// <summary>
+    /// Allows renaming the file name's extension if <see cref="AllowRenaming"/> is also true. Default is true.
+    /// </summary>
+    [Parameter]
+    public bool AllowRenamingExtension { get; set; } = true;
+
+    /// <summary>
     /// If true, and <see cref="IncludeButton"/> is false, then text will be displayed 
     /// always - if false, it will only display when not files are present.
     /// </summary>
@@ -91,7 +103,7 @@
 
     private RenderFragment DefaultRenderFile(FrontEndFile file)
     {
-        return@<DefaultFileRender File="@file" FileUpload="@this"></DefaultFileRender>;
+        return@<DefaultFileRender File="@file" FileUpload="@this" AllowRenaming="@AllowRenaming" FileRenamed="@FileRenamed"></DefaultFileRender>;
     }
 
     private FileUploadRenderHelper RenderHelper;

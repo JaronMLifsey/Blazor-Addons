@@ -14,7 +14,20 @@
         }
         @if (File.IsValid)
         {
-            <p class="file-upload-file-name">@(File.RenamedFileName ?? File.FileName)</p>
+            if (AllowRenaming)
+            {
+                <div class="file-upload-rename-container">
+                    <svg class="file-upload-rename-edit-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
+                        <path d="M0 0h24v24H0z" fill="none" />
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                    </svg>
+                    <input class="file-upload-file-name editable" type="text" value="@File.RenamedFileName" @onchange="@OnRenamed" />
+                </div>
+            }
+            else
+            {
+                <p class="file-upload-file-name">@(File.RenamedFileName ?? File.FileName)</p>
+            }
         }
         else
         {
@@ -42,28 +55,36 @@
     [Parameter]
     [EditorRequired]
     public FrontEndFile File { get; set; } = default!;
+    public FrontEndFile? _File { get; set; }
 
     [Parameter]
     [EditorRequired]
     public FileUpload FileUpload { get; set; } = default!;
 
-    private double Percent = 0;
+    [Parameter]
+    public bool AllowRenaming { get; set; } = true;
 
-    public override Task SetParametersAsync(ParameterView parameters)
-    {
-        if (File != null)
-        {
-            File.OnDownloadProgressMade -= DownloadProgressMade;
-        }
-        return base.SetParametersAsync(parameters);
-    }
+    [Parameter]
+    public EventCallback<FrontEndFile> FileRenamed { get; set; }
+
+    private double Percent = 0;
 
     protected override void OnParametersSet()
     {
-        if (File != null)
+        if (_File != null && _File != File)
         {
+            _File.OnDownloadProgressMade -= DownloadProgressMade;
             File.OnDownloadProgressMade += DownloadProgressMade;
         }
+
+        _File = File;
+    }
+
+    private Task OnRenamed(ChangeEventArgs ev)
+    {
+        File.RenamedFileName = ev.Value?.ToString() ?? string.Empty;
+        FileUpload.Validate();
+        return FileRenamed.InvokeAsync(File);
     }
 
     public void Dispose()
