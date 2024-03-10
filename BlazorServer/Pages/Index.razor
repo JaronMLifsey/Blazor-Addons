@@ -7,7 +7,8 @@
             Validation="@Validation"
             FileValidation="@FileValidation"
             IncludeButton="true"
-            AllowRenaming="true">
+            AllowRenaming="true"
+            AllowRenamingExtension="@Toggle">
 
 </FileUpload>
 
@@ -15,6 +16,8 @@
 
 @code {
     private FileUpload Instance;
+
+    private bool Toggle = false;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
 
@@ -22,7 +25,7 @@
 
     private void ButtonClicked()
     {
-
+        Toggle = !Toggle;
     }
 
     private List<string>? Validation(IReadOnlyList<FrontEndFile> files)

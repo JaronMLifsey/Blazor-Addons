@@ -103,7 +103,11 @@
 
     private RenderFragment DefaultRenderFile(FrontEndFile file)
     {
-        return@<DefaultFileRender File="@file" FileUpload="@this" AllowRenaming="@AllowRenaming" FileRenamed="@FileRenamed"></DefaultFileRender>;
+        return @<DefaultFileRender File="@file" 
+                                   FileUpload="@this" 
+                                   AllowRenaming="@AllowRenaming" 
+                                   AllowRenamingExtension="@AllowRenamingExtension" 
+                                   FileRenamed="@FileRenamed"></DefaultFileRender>;
     }
 
     private FileUploadRenderHelper RenderHelper;

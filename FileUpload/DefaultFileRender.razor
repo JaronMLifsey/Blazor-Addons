@@ -21,7 +21,7 @@
                         <path d="M0 0h24v24H0z" fill="none" />
                         <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                     </svg>
-                    <input class="file-upload-file-name editable" type="text" value="@File.RenamedFileName" @onchange="@OnRenamed" />
+                    <input aria-label="@FileNameAriaLabel" class="file-upload-file-name editable" type="text" value="@Renamed" @onchange="@OnRenamed" />
                 </div>
             }
             else
@@ -41,6 +41,11 @@
     </div>
 
     <div class="right-content">
+        
+        @if (File.IsValid && AllowRenaming && !AllowRenamingExtension)
+        {
+            <p class="file-upload-file-extension-text"><span class="extension">@Extension</span> file</p>
+        }
         <p>@FrontEndFile.BytesToString(File.FileSizeBytes)</p>
         <button class="file-upload-file-delete-button" onclick=@(() => { _ = FileUpload.DeleteFile(File); }) disabled="@File.IsDownloading">
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
@@ -65,7 +70,17 @@
     public bool AllowRenaming { get; set; } = true;
 
     [Parameter]
+    public bool AllowRenamingExtension { get; set; } = true;
+    public bool? _AllowRenamingExtension;
+
+    [Parameter]
     public EventCallback<FrontEndFile> FileRenamed { get; set; }
+
+    [Parameter]
+    public string FileNameAriaLabel { get; set; } = "File Name";
+
+    private string Renamed = string.Empty;
+    private string Extension = string.Empty;
 
     private double Percent = 0;
 
@@ -74,7 +89,25 @@
         if (_File != null && _File != File)
         {
             _File.OnDownloadProgressMade -= DownloadProgressMade;
+        }
+
+        if (File != null && _File != File)
+        {
             File.OnDownloadProgressMade += DownloadProgressMade;
+
+            Renamed = AllowRenamingExtension ? File.FileName : File.FileNameNoExtension;
+            Extension = File.FileNameExtension;
+        }
+
+        if (_AllowRenamingExtension == null)
+        {
+            _AllowRenamingExtension = AllowRenamingExtension;
+        }
+
+        if (AllowRenamingExtension != _AllowRenamingExtension)
+        {
+            _AllowRenamingExtension = AllowRenamingExtension;
+            Renamed = AllowRenamingExtension ? Renamed + Extension : Path.GetFileNameWithoutExtension(Renamed);
         }
 
         _File = File;
@@ -82,7 +115,8 @@
 
     private Task OnRenamed(ChangeEventArgs ev)
     {
-        File.RenamedFileName = ev.Value?.ToString() ?? string.Empty;
+        Renamed = ev.Value?.ToString() ?? string.Empty;
+        File.RenamedFileName = Renamed + (AllowRenamingExtension ? string.Empty : Extension);
         FileUpload.Validate();
         return FileRenamed.InvokeAsync(File);
     }

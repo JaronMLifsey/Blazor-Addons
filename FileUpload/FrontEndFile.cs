@@ -6,10 +6,14 @@ namespace BlazorFileUpload
     {
         private readonly FileUpload? Manager;
         public readonly string FileName;
+        public string FileNameExtension => Path.GetExtension(FileName);
+        public string FileNameNoExtension => Path.GetFileNameWithoutExtension(FileName);
         /// <summary>
         /// Contains the user-renamed file name. If the user never changed it, it will be the same as <see cref="FileName"/>.
         /// </summary>
         public string RenamedFileName;
+        public string RenamedFileNameExtension => Path.GetExtension(RenamedFileName);
+        public string RenamedFileNameNoExtension => Path.GetFileNameWithoutExtension(RenamedFileName);
         /// <summary>
         /// This is the number of bytes which have been downloaded.
         /// It is automatically updated based on the progress of the stream returned 
