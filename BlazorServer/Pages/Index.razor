@@ -2,13 +2,15 @@
 @using System.Diagnostics
 
 <FileUpload @ref=@Instance
+            Files="@Files"
             FilesChanged="@OnFilesChanged"
             Multiple="true"
             Validation="@Validation"
             FileValidation="@FileValidation"
             IncludeButton="true"
             AllowRenaming="true"
-            AllowRenamingExtension="@Toggle">
+            AllowRenamingExtension="@Toggle"
+            FileDeleted="@OnFileDeleted">
 
 </FileUpload>
 
@@ -16,6 +18,15 @@
 
 @code {
     private FileUpload Instance;
+
+    private List<FrontEndFile> Files = new(){
+        new FrontEndFile("File 1.txt", 1000),
+        new FrontEndFile("Extra file 2.txt", 1000),
+    };
+    private void OnFileDeleted(FrontEndFile fille)
+    {
+        Debug.WriteLine("deleted");
+    }
 
     private bool Toggle = false;
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -34,18 +45,26 @@
         {
             return null;
         }
+        return null;
         return new List<string>()
         {
             "This is an error"
         };
     }
+
     private List<string>? FileValidation(FrontEndFile file)
     {
+        if (file.RenamedFileNameExtension == ".txt")
+        {
+            return new() { file.FileName + ": txt files are now allowed." };
+        }
         return null;
     }
 
-    private async Task OnFilesChanged(IEnumerable<FrontEndFile> files)
+    private async Task OnFilesChanged(List<FrontEndFile> files)
     {
+        Files = files;
+
         if (!files.Any())
         {
             return;

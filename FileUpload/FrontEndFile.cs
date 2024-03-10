@@ -5,15 +5,48 @@ namespace BlazorFileUpload
     public class FrontEndFile
     {
         private readonly FileUpload? Manager;
-        public readonly string FileName;
-        public string FileNameExtension => Path.GetExtension(FileName);
-        public string FileNameNoExtension => Path.GetFileNameWithoutExtension(FileName);
+
+        /// <summary>
+        /// The initial name of the file.
+        /// </summary>
+        public string FileName
+        {
+            get => _FileName;
+            set
+            {
+                if (_FileName != value)
+                {
+                    _FileName = value;
+                    FileNameExtension = Path.GetExtension(value);
+                    FileNameNoExtension = Path.GetFileNameWithoutExtension(value);
+                }
+            }
+        }
+        private string _FileName;
+        public string FileNameExtension { get; private set; }
+        public string FileNameNoExtension { get; private set; }
+
         /// <summary>
         /// Contains the user-renamed file name. If the user never changed it, it will be the same as <see cref="FileName"/>.
         /// </summary>
-        public string RenamedFileName;
-        public string RenamedFileNameExtension => Path.GetExtension(RenamedFileName);
-        public string RenamedFileNameNoExtension => Path.GetFileNameWithoutExtension(RenamedFileName);
+        public string RenamedFileName
+        {
+            get => _RenamedFileName;
+            set { 
+                if (_RenamedFileName != value)
+                {
+                    _RenamedFileName = value;
+                    RenamedFileNameExtension = Path.GetExtension(value);
+                    RenamedFileNameNoExtension = Path.GetFileNameWithoutExtension(value);
+                }
+            }
+        }
+        private string _RenamedFileName;
+
+        public string RenamedFileNameExtension { get; private set; }
+        public string RenamedFileNameNoExtension { get; private set; }
+
+
         /// <summary>
         /// This is the number of bytes which have been downloaded.
         /// It is automatically updated based on the progress of the stream returned 
@@ -53,7 +86,7 @@ namespace BlazorFileUpload
 
         public DownloadProgressListener? OnDownloadProgressMade;
 
-        public bool CanCreateStream => Manager != null;
+        public bool IsUserAdded => Manager != null;
 
         internal readonly int ID;
 
@@ -66,16 +99,17 @@ namespace BlazorFileUpload
             ID = id;
         }
 
-        public FrontEndFile(string fileName, long fileSizeBytes, int id)
+        public FrontEndFile(string fileName, long fileSizeBytes)
         {
             Manager = null;
             FileName = fileName;
+            RenamedFileName = fileName;
             FileSizeBytes = fileSizeBytes;
-            ID = id;
+            ID = 0;
         }
 
         /// <returns>A stream for the file's contents.</returns>
-        /// <remarks>Only call this for files the user has uploaded this session (<see cref="CanCreateStream"/> is true), 
+        /// <remarks>Only call this for files the user has uploaded this session (<see cref="IsUserAdded"/> is true), 
         /// not for files which were passed to <see cref="FileUpload.Files"/>.</remarks>
         /// <exception cref="InvalidOperationException">If this file is not one the user uploaded this session and is instead a file passed to <see cref="FileUpload.Files"/></exception>
         public FrontEndFileStream CreateStream(DownloadProgressListener? progressListener = null, double reportFrequency = 0.01, int maxMessageSize = 1024 * 31, long maxBuffer = 1024 * 256)
@@ -98,7 +132,7 @@ namespace BlazorFileUpload
         }
 
         /// <returns>All the files contents.</returns>
-        /// <remarks>Only call this for files the user has uploaded this session (<see cref="CanCreateStream"/> is true), 
+        /// <remarks>Only call this for files the user has uploaded this session (<see cref="IsUserAdded"/> is true), 
         /// not for files which were passed to <see cref="FileUpload.Files"/>.</remarks>
         /// <exception cref="InvalidOperationException">If this file is not one the user uploaded this session and is instead a file passed to <see cref="FileUpload.Files"/></exception>
         public async Task<byte[]> GetAllContents(DownloadProgressListener? progressListener = null, double reportFrequency = 0.01, int maxMessageSize = 1024 * 31, long maxBuffer = 1024 * 256)
@@ -125,15 +159,18 @@ namespace BlazorFileUpload
             OnDownloadProgressMade?.Invoke(downloadedBytes, downloadComplete);
         }
 
-        public static String BytesToString(long byteCount)
+        public static string BytesToString(long bytes)
         {
-            string[] suf = { "B", "KB", "MB", "GB", "TB", "PB", "EB" };
-            if (byteCount == 0)
-                return "0" + suf[0];
-            long bytes = Math.Abs(byteCount);
-            int place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
+            bytes = Math.Abs(bytes);
+            string[] suffix = { "B", "KB", "MB", "GB", "TB", "PB", "EB" };
+            if (bytes == 0)
+            {
+                return "0" + suffix[0];
+            }
+
+            int place = Convert.ToInt32(Math.Floor(Math.Log(bytes * 10, 1024)));
             double num = Math.Round(bytes / Math.Pow(1024, place), 1);
-            return (Math.Sign(byteCount) * num).ToString() + suf[place];
+            return (Math.Sign(bytes) * num).ToString() + suffix[place];
         }
     }
 }

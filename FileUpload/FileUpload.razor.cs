@@ -47,10 +47,21 @@ namespace BlazorFileUpload
 
         /// <summary>
         /// The errors returned by <see cref="Validation"/>.
-        /// Errors returned by <see cref="FileValidation"/> are in each individual file in <see cref="Files"/>.
+        /// Errors returned by <see cref="FileValidation"/> are in each individual file in 
+        /// <see cref="Files"/> an can be enumerated through <see cref="FileErrors"/>.
         /// </summary>
-        public IReadOnlyList<string> Errors => _Errors;
-        public List<string> _Errors { get; set; }
+        public IEnumerable<string> Errors => _Errors;
+        public List<string> _Errors { get; set; } = new();
+
+        /// <summary>
+        /// An enumeration of the errors of all <see cref="Files"/>.
+        /// </summary>
+        public IEnumerable<string> FileErrors => Files.SelectMany(x => x.Errors);
+
+        /// <summary>
+        /// A concatenation of <see cref="Errors"/> with <see cref="FileErrors"/>.
+        /// </summary>
+        public IEnumerable<string> AllErrors => Errors.Concat(FileErrors);
 
 
         private ElementReference? Input;
@@ -65,6 +76,14 @@ namespace BlazorFileUpload
             InnerRender = DefaultRenderInner;
             FilesRender = DefaultRenderFiles;
             FileRender = DefaultRenderFile;
+        }
+
+        protected override void OnParametersSet()
+        {
+            if (Files.Any())
+            {
+                Validate();
+            }
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
