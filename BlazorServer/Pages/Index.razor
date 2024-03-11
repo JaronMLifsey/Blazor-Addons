@@ -4,14 +4,19 @@
 <FileUpload @ref=@Instance
             Files="@Files"
             FilesChanged="@OnFilesChanged"
-            Multiple="true"
             Validation="@Validation"
             FileValidation="@FileValidation"
             IncludeButton="true"
             AllowRenaming="true"
             AllowRenamingExtension="@Toggle"
-            FileDeleted="@OnFileDeleted">
-
+            FileDeleted="@OnFileDeleted"
+            MinimumFileCount="1"
+            MinimumFileCountError="You've got to add more than {0} files."
+            MaximumFileCount="2"
+            MaximumFileSize="1000"
+            MaximumFileSizeError="don't add files bigger than {0}"
+            MaximumFileCountError="you can't add more files than {0}."
+            AcceptedFiles=".dart">
 </FileUpload>
 
 <button onclick="@ButtonClicked">test</button>

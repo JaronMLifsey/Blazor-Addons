@@ -135,7 +135,14 @@
             return
             @<text>
                 <label @key="@Id" for="@Id" aria-label="@ariaLabel" class="file-upload-upload-button">@text</label>
-                <input @key="@("_" + Id)" id="@Id" style="display: none;" @ref=@Component.Input type="file" title=" " multiple=@Component.Multiple />
+                <input @key="@("_" + Id)"
+                       @ref="@Component.Input"
+                       id="@Id" 
+                       style="display: none;" 
+                       type="file" 
+                       title=" " 
+                       multiple=@(Component.MaximumFileCount > 1) 
+                       accept="@Component.AcceptedFiles" />
             </text>;
         }
 

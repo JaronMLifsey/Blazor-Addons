@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
-using static BlazorFileUpload.FrontEndFile;
 using static BlazorFileUpload.FrontEndFileStream;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BlazorFileUpload
 {
@@ -13,9 +11,6 @@ namespace BlazorFileUpload
         private IJSRuntime JsRuntime { get; set; } = default!;
         [Inject]
         private ILogger<FileUpload>? Logger { get; set; } = default!;
-
-        [Parameter]
-        public bool Multiple { get; set; } = false;
 
         [Parameter]
         public List<FrontEndFile> Files { get; set; } = new();
@@ -38,6 +33,53 @@ namespace BlazorFileUpload
 
         [Parameter]
         public Func<IReadOnlyList<FrontEndFile>?, List<string>>? Validation { get; set; }
+
+        /// <summary>
+        /// The minimum number of files which must be added or <see cref="MinimumFileCountError"/> will be displayed.
+        /// </summary>
+        [Parameter]
+        public int MinimumFileCount { get; set; } = 0;
+
+        /// <summary>
+        /// The error message that will be displayed if <see cref="MinimumFileCount"/> is exceeded.
+        /// If present, {0} will be replaced with <see cref="MinimumFileCount"/>.
+        /// </summary>
+        [Parameter]
+        public string MinimumFileCountError { get; set; } = "At least {0} file(s) must be uploaded.";
+
+        /// <summary>
+        /// The maximum number of files which can be added before <see cref="MaximumFileCountError"/> will be displayed.
+        /// If more than 1, the file selector which opens will allow adding multiple files.
+        /// </summary>
+        [Parameter]
+        public int MaximumFileCount { get; set; } = 10;
+
+        /// <summary>
+        /// The error message that will be displayed if <see cref="MaximumFileCount"/> is exceeded.
+        /// If present, {0} will be replaced with <see cref="MaximumFileCount"/>.
+        /// </summary>
+        [Parameter]
+        public string MaximumFileCountError { get; set; } = "More files added than the maximum of {0}.";
+
+        /// <summary>
+        /// The maximum number of files which can be added before <see cref="MaximumFileCountError"/> will be displayed.
+        /// If more than 1, the file selector which opens will allow adding multiple files.
+        /// </summary>
+        [Parameter]
+        public int MaximumFileSize { get; set; } = 10;
+
+        /// <summary>
+        /// The error message that will be displayed if <see cref="MaximumFileSize"/> is exceeded.
+        /// If present, {0} will be replaced with <see cref="MaximumFileSize"/> formatted as a file size.
+        /// </summary>
+        [Parameter]
+        public string MaximumFileSizeError { get; set; } = "Files cannot be greater than {0}.";
+
+        /// <summary>
+        /// This will be passed to the "accept" attribute of the file input. No validation is performed based on this.
+        /// </summary>
+        [Parameter]
+        public string? AcceptedFiles { get; set; }
 
         /// <summary>
         /// True if, when <see cref="Validate"/> was last called, <see cref="Errors"/> was empty and every file in <see cref="Files"/> was without error.
@@ -129,20 +171,41 @@ namespace BlazorFileUpload
 
         public void Validate()
         {
-            bool isValid = true;
+            bool allFilesValid = true;
             if (FileValidation != null)
             {
                 foreach (var file in Files)
                 {
                     file.Errors = FileValidation?.Invoke(file) ?? new();
-                    isValid = isValid && !file.Errors.Any();
+
+                    if (file.FileSizeBytes > MaximumFileSize)
+                    {
+                        file.Errors.Add(string.Format(MaximumFileSizeError, FrontEndFile.BytesToString(MaximumFileSize)));
+                    }
+
+                    allFilesValid = allFilesValid && !file.Errors.Any();
                 }
             }
 
-            _Errors = Validation?.Invoke(Files) ?? new();
-            isValid = isValid && !_Errors.Any();
+            _Errors = new();
 
-            IsValid = isValid;
+            if (Files.Count > MaximumFileCount)
+            {
+                _Errors.Add(string.Format(MaximumFileCountError, MaximumFileCount));
+            }
+
+            if (Files.Count < MinimumFileCount)
+            {
+                _Errors.Add(string.Format(MinimumFileCountError, MinimumFileCount));
+            }
+
+            var userErrors = Validation?.Invoke(Files);
+            if (userErrors != null)
+            {
+                _Errors.AddRange(userErrors);
+            }
+
+            IsValid = allFilesValid && !_Errors.Any();
         }
 
         public async Task DeleteFile(FrontEndFile file)
