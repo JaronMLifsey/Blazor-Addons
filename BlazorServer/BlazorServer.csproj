@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FileUpload\BlazorAddons.csproj" />
+    <ProjectReference Include="..\BlazorAddons\BlazorAddons.csproj" />
   </ItemGroup>
 
 </Project>
