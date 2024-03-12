@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
-using static BlazorFileUpload.FrontEndFileStream;
+using static BlazorAddons.FrontEndFileStream;
 
-namespace BlazorFileUpload
+namespace BlazorAddons
 {
     public partial class FileUpload : ComponentBase, IAsyncDisposable
     {
@@ -132,7 +132,7 @@ namespace BlazorFileUpload
         {
             if (firstRender)
             {
-                Module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorFileUpload/FileUpload.js");
+                Module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorAddons/FileUpload.js");
                 FileUploadJsObject = await Module.InvokeAsync<IJSObjectReference>("CreateFileUploader", Input, DropZone, DotNetObjectReference.Create(this));
             }
         }

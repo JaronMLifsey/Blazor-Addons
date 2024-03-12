@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using System.Threading.Tasks.Dataflow;
-using static BlazorFileUpload.FrontEndFile;
+using static BlazorAddons.FrontEndFile;
 
-namespace BlazorFileUpload
+namespace BlazorAddons
 {
     public class FrontEndFileStream : Stream
     {

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34316.72
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorFileUpload", "FileUpload\BlazorFileUpload.csproj", "{B35B5913-E389-4FDF-B7A4-927F753EFAB6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorAddons", "FileUpload\BlazorAddons.csproj", "{B35B5913-E389-4FDF-B7A4-927F753EFAB6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorServer", "BlazorServer\BlazorServer.csproj", "{00F92607-6A4A-4376-AF88-77E846845568}"
 EndProject

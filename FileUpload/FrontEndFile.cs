@@ -1,6 +1,6 @@
-﻿using static BlazorFileUpload.FrontEndFileStream;
+﻿using static BlazorAddons.FrontEndFileStream;
 
-namespace BlazorFileUpload
+namespace BlazorAddons
 {
     public class FrontEndFile
     {
