@@ -59,7 +59,7 @@ namespace BlazorAddons
         /// If present, {0} will be replaced with <see cref="MaximumFileCount"/>.
         /// </summary>
         [Parameter]
-        public string MaximumFileCountError { get; set; } = "More files added than the maximum of {0}.";
+        public string MaximumFileCountError { get; set; } = "More files were added than the maximum of {0}.";
 
         /// <summary>
         /// The maximum number of files which can be added before <see cref="MaximumFileCountError"/> will be displayed.
@@ -70,10 +70,10 @@ namespace BlazorAddons
 
         /// <summary>
         /// The error message that will be displayed if <see cref="MaximumFileSize"/> is exceeded.
-        /// If present, {0} will be replaced with <see cref="MaximumFileSize"/> formatted as a file size.
+        /// If present, {0} will be replaced with the file name and {1} with <see cref="MaximumFileSize"/> formatted as a file size.
         /// </summary>
         [Parameter]
-        public string MaximumFileSizeError { get; set; } = "Files cannot be greater than {0}.";
+        public string MaximumFileSizeError { get; set; } = "{0}: Files cannot be greater than {1}.";
 
         /// <summary>
         /// This will be passed to the "accept" attribute of the file input. No validation is performed based on this.
@@ -180,7 +180,7 @@ namespace BlazorAddons
 
                     if (file.FileSizeBytes > MaximumFileSize)
                     {
-                        file.Errors.Add(string.Format(MaximumFileSizeError, FrontEndFile.BytesToString(MaximumFileSize)));
+                        file.Errors.Add(string.Format(MaximumFileSizeError, file.RenamedFileName, FrontEndFile.BytesToString(MaximumFileSize)));
                     }
 
                     allFilesValid = allFilesValid && !file.Errors.Any();

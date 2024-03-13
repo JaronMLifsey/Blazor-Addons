@@ -22,9 +22,9 @@ namespace BlazorAddons
                 }
             }
         }
-        private string _FileName;
-        public string FileNameExtension { get; private set; }
-        public string FileNameNoExtension { get; private set; }
+        private string _FileName = default!;
+        public string FileNameExtension { get; private set; } = default!;
+        public string FileNameNoExtension { get; private set; } = default!;
 
         /// <summary>
         /// Contains the user-renamed file name. If the user never changed it, it will be the same as <see cref="FileName"/>.
@@ -41,10 +41,10 @@ namespace BlazorAddons
                 }
             }
         }
-        private string _RenamedFileName;
+        private string _RenamedFileName = default!;
 
-        public string RenamedFileNameExtension { get; private set; }
-        public string RenamedFileNameNoExtension { get; private set; }
+        public string RenamedFileNameExtension { get; private set; } = default!;
+        public string RenamedFileNameNoExtension { get; private set; } = default!;
 
 
         /// <summary>
