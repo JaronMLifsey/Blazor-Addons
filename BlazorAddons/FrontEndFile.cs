@@ -108,9 +108,15 @@ namespace BlazorAddons
             ID = 0;
         }
 
-        /// <returns>A stream for the file's contents.</returns>
+        /// <summary>Creates a stream that can be used to read the data from the user-uploaded file. The stream does not support seeking.</summary>
+        /// <returns>A stream of the file's contents.</returns>
         /// <remarks>Only call this for files the user has uploaded this session (<see cref="IsUserAdded"/> is true), 
         /// not for files which were passed to <see cref="FileUpload.Files"/>.</remarks>
+        /// <param name="progressListener">This will be called when download progress is made on this stream.</param>
+        /// <param name="reportFrequency">How often progress is reported as a percentage (0.01 is 1%).</param>
+        /// <param name="maxMessageSize">The maximum message size to use when sending file data from JavaScript to C#.</param>
+        /// <param name="maxBuffer">The maximum amount of data from JavaScript to buffer in the stream object before the JavaScript 
+        /// side will stop sending data and wait for the buffered data to be read from the stream.</param>
         /// <exception cref="InvalidOperationException">If this file is not one the user uploaded this session and is instead a file passed to <see cref="FileUpload.Files"/></exception>
         public FrontEndFileStream CreateStream(DownloadProgressListener? progressListener = null, double reportFrequency = 0.01, int maxMessageSize = 1024 * 31, long maxBuffer = 1024 * 256)
         {
@@ -131,9 +137,14 @@ namespace BlazorAddons
             return stream;
         }
 
-        /// <returns>All the files contents.</returns>
+        /// <returns>All the file's contents.</returns>
         /// <remarks>Only call this for files the user has uploaded this session (<see cref="IsUserAdded"/> is true), 
         /// not for files which were passed to <see cref="FileUpload.Files"/>.</remarks>
+        /// <param name="progressListener">This will be called when download progress is made on this stream.</param>
+        /// <param name="reportFrequency">How often progress is reported as a percentage (0.01 is 1%).</param>
+        /// <param name="maxMessageSize">The maximum message size to use when sending file data from JavaScript to C#.</param>
+        /// <param name="maxBuffer">The maximum amount of data from JavaScript to buffer in the stream object before the JavaScript 
+        /// side will stop sending data and wait for the buffered data to be read from the stream.</param>
         /// <exception cref="InvalidOperationException">If this file is not one the user uploaded this session and is instead a file passed to <see cref="FileUpload.Files"/></exception>
         public async Task<byte[]> GetAllContents(DownloadProgressListener? progressListener = null, double reportFrequency = 0.01, int maxMessageSize = 1024 * 31, long maxBuffer = 1024 * 256)
         {
@@ -159,6 +170,11 @@ namespace BlazorAddons
             OnDownloadProgressMade?.Invoke(downloadedBytes, downloadComplete);
         }
 
+        /// <summary>
+        /// Formats the passed bytes as a string. E.g., 1000 would be 1KB.
+        /// </summary>
+        /// <param name="bytes">The number of bytes.</param>
+        /// <returns>A formatted string.</returns>
         public static string BytesToString(long bytes)
         {
             bytes = Math.Abs(bytes);
