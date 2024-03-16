@@ -1,4 +1,6 @@
-﻿@implements IDisposable
+﻿@namespace BlazorAddons
+
+@implements IDisposable
 
 <div class=@("file-upload-file" + (File.IsValid ? string.Empty : " invalid")) style="--percent: @Percent">
     <div class="left-content">

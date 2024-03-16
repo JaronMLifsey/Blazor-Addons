@@ -32,7 +32,8 @@ namespace BlazorAddons
         public string RenamedFileName
         {
             get => _RenamedFileName;
-            set { 
+            set
+            {
                 if (_RenamedFileName != value)
                 {
                     _RenamedFileName = value;

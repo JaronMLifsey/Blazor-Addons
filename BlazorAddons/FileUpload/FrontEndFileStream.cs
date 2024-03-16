@@ -62,9 +62,10 @@ namespace BlazorAddons
         public override bool CanSeek => false;
         public override bool CanWrite => false;
         public override long Length => File.FileSizeBytes;
-        public override long Position { 
+        public override long Position
+        {
             get => _Position;
-            set => throw new NotImplementedException("Seeking is not possible."); 
+            set => throw new NotImplementedException("Seeking is not possible.");
         }
 
         public override void Flush() { }
