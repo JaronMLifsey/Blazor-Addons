@@ -67,7 +67,7 @@
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.3);
 }
 
-.file-upload-file-delete-button svg {
+::deep .file-upload-file-delete-button svg {
     height: 1.4rem;
     position: absolute;
     top: 50%;
@@ -79,13 +79,14 @@ button:disabled {
     opacity: 0.5;
 }
 
-.file-upload-rename-container{
-    position: relative;
-}
-.file-upload-file-error-icon {
+::deep.file-upload-file.invalid .error-icon {
     color: var(--error-text);
 }
-.file-upload-rename-edit-icon {
+
+.file-upload-rename-container {
+    position: relative;
+}
+::deep .file-upload-rename-container svg {
     color: inherit;
     position: absolute;
     right: 0px;
@@ -96,13 +97,13 @@ button:disabled {
     pointer-events: none;
     opacity: 33%;
 }
-.file-upload-rename-container:has(.file-upload-file-name.editable:focus-visible) .file-upload-rename-edit-icon {
+::deep .file-upload-rename-container:has(.file-upload-file-name.editable:focus-visible) svg {
     opacity: 75%;
 }
 
 .file-upload-file-name.editable {
     border: none;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.33);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.20);
     margin: 0;
     background-color: transparent;
     padding: 0.25em 2em 0.25em 0.25em;

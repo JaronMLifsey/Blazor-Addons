@@ -4,9 +4,7 @@
     <div class="left-content">
         @if (!File.IsValid)
         {
-            <svg class="file-upload-file-error-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-            </svg>
+            @RenderingOverrides.Icons.Error
         }
         @if (File.IsDownloading)
         {
@@ -17,10 +15,7 @@
             if (AllowRenaming)
             {
                 <div class="file-upload-rename-container">
-                    <svg class="file-upload-rename-edit-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
-                        <path d="M0 0h24v24H0z" fill="none" />
-                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                    </svg>
+                    @RenderingOverrides.Icons.Edit
                     <input aria-label="@FileNameAriaLabel" class="file-upload-file-name editable" type="text" value="@Renamed" @onchange="@OnRenamed" />
                 </div>
             }
@@ -47,11 +42,8 @@
             <p class="file-upload-file-extension-text"><span class="extension">@Extension</span> file</p>
         }
         <p>@FrontEndFile.BytesToString(File.FileSizeBytes)</p>
-        <button class="file-upload-file-delete-button" onclick=@(() => { _ = FileUpload.DeleteFile(File); }) disabled="@File.IsDownloading">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
-                <path d="M0 0h24v24H0z" fill="none" />
-                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-            </svg>
+        <button aria-label="@DeleteAriaLabel" class="file-upload-file-delete-button" onclick=@(() => { _ = FileUpload.DeleteFile(File); }) disabled="@File.IsDownloading">
+            @RenderingOverrides.Icons.Delete
         </button>
     </div>
 </div>
@@ -78,6 +70,9 @@
 
     [Parameter]
     public string FileNameAriaLabel { get; set; } = "File Name";
+
+    [Parameter]
+    public string DeleteAriaLabel { get; set; } = "Delete";
 
     private string Renamed = string.Empty;
     private string Extension = string.Empty;

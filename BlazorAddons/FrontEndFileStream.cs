@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using System.Threading.Tasks.Dataflow;
-using static BlazorAddons.FrontEndFile;
 
 namespace BlazorAddons
 {
