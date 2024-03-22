@@ -9,6 +9,7 @@ namespace BlazorAddons
     {
         [Inject]
         private IJSRuntime JsRuntime { get; set; } = default!;
+
         [Inject]
         private ILogger<FileUpload>? Logger { get; set; } = default!;
 

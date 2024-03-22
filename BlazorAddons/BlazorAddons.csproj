@@ -12,13 +12,15 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <PackageTags>fileupload;file;upload;blazor</PackageTags>
+    <PackageTags>fileupload;file;upload;blazor;input</PackageTags>
     <PackageId />
     <Title>Blazor Addons</Title>
     <Authors>Jaron Lifsey</Authors>
     <PackageProjectUrl>https://github.com/JaronMLifsey/Blazor-Addons</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JaronMLifsey/Blazor-Addons</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>False</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
 
@@ -32,6 +34,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\RichTextEditor\" />
   </ItemGroup>
 
 </Project>
