@@ -19,9 +19,9 @@
     <PackageProjectUrl>https://github.com/JaronMLifsey/Blazor-Addons</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JaronMLifsey/Blazor-Addons</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <IncludeSymbols>False</IncludeSymbols>
+    <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-	<VersionPrefix>0.1.1</VersionPrefix>
+	<VersionPrefix>0.1.2</VersionPrefix>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
 	<Copyright>MIT</Copyright>
 	<Description>A replacement to Blazor's default InputFile component. This FileUpload component allows for uploading files across multiple file selections/drag-and-drops.</Description>
