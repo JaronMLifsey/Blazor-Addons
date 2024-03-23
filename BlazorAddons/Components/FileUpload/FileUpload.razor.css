@@ -41,21 +41,11 @@
 }
 
 .file-upload-upload-button {
-    text-align: center;
-    padding: 0.5rem;
-    border: 1px solid gray;
-    border-radius: 0.25rem;
     user-select: none;
     display: block;
-    transition: all 250ms;
 }
 .file-upload-upload-button:hover {
     cursor: pointer;
-    box-shadow: 4px 4px 10px 0px rgba(0,0,0,0.3);
-}
-
-.file-upload-upload-button:active {
-    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.3);
 }
 
 .file-upload-drop-zone-text {

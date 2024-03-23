@@ -44,7 +44,7 @@
             <p class="file-upload-file-extension-text"><span class="extension">@Extension</span> file</p>
         }
         <p>@FrontEndFile.BytesToString(File.FileSizeBytes)</p>
-        <button aria-label="@DeleteAriaLabel" class="file-upload-file-delete-button" onclick=@(() => { _ = FileUpload.DeleteFile(File); }) disabled="@File.IsDownloading">
+        <button aria-label="@DeleteAriaLabel" class="blazor-addons-button file-upload-file-delete-button" onclick=@(() => { _ = FileUpload.DeleteFile(File); }) disabled="@File.IsDownloading">
             @RenderingOverrides.Icons.Delete
         </button>
     </div>

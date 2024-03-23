@@ -1,0 +1,26 @@
+﻿
+.blazor-addons-component, .blazor-addons-component * {
+    box-sizing: border-box;
+}
+
+.blazor-addons-button {
+    border-radius: 0.25rem;
+    border: 1px solid gray;
+    transition: box-shadow 200ms, transform 100ms;
+    background-color: white;
+    padding: 0.5rem;
+}
+
+.blazor-addons-button:hover {
+    box-shadow: 4px 4px 10px 0px rgba(0,0,0,0.3);
+    transform: translate(-1px, -1px);
+}
+
+.blazor-addons-button:active {
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.3);
+    transform: translate(0px, 0px);
+}
+
+.blazor-addons-button:disabled {
+    opacity: 0.5;
+}

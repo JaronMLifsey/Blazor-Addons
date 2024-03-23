@@ -1,6 +1,6 @@
 ﻿@namespace BlazorAddons
 
-<div class="file-upload @InvalidClassStr @Class">
+<div class="file-upload blazor-addons-component @InvalidClassStr @Class">
     @ChildContent(RenderHelper)
 </div>
 
@@ -135,7 +135,7 @@
         {
             return
             @<text>
-                <label @key="@Id" for="@Id" aria-label="@ariaLabel" class="file-upload-upload-button">@text</label>
+                <label @key="@Id" for="@Id" aria-label="@ariaLabel" class="blazor-addons-button file-upload-upload-button">@text</label>
                 <input @key="@("_" + Id)"
                        @ref="@Component.Input"
                        id="@Id" 
