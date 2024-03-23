@@ -1,54 +1,62 @@
 ﻿@namespace BlazorAddons
-
 @implements IDisposable
 
-<div class=@("file-upload-file" + (File.IsValid ? string.Empty : " invalid")) style="--percent: @Percent">
-    <div class="left-content">
-        @if (!File.IsValid)
-        {
-            @RenderingOverrides.Icons.Error
-        }
-        @if (File.IsDownloading)
-        {
-            <p class="file-upload-file-percent">@(Percent.ToString("P0"))</p>
-        }
-        @if (File.IsValid)
-        {
-            if (AllowRenaming)
-            {
-                <div class="file-upload-rename-container">
-                    @RenderingOverrides.Icons.Edit
-                    <input aria-label="@FileNameAriaLabel" class="file-upload-file-name editable" type="text" value="@Renamed" @onchange="@OnRenamed" />
-                </div>
-            }
-            else
-            {
-                <p class="file-upload-file-name">@(File.RenamedFileName ?? File.FileName)</p>
-            }
-        }
-        else
-        {
-            <div class="file-upload-file-errors-container">
-                @foreach(var error in File.Errors)
+@ChildContent(File)
+
+@code {
+    private RenderFragment DefaultRender(FrontEndFile file)
+    {
+        return @<div class=@("file-upload-file" + (file.IsValid ? string.Empty : " invalid")) style="--percent: @Percent">
+            <div class="left-content">
+                @if (!file.IsValid)
                 {
-                    <p class="file-upload-file-error">@error</p>
+                    @RenderingOverrides.Icons.Error
+                }
+                @if (file.IsDownloading)
+                {
+                    <p class="file-upload-file-percent">@(Percent.ToString("P0"))</p>
+                }
+                @if (file.IsValid)
+                {
+                    if (AllowRenaming)
+                    {
+                        <div class="file-upload-rename-container">
+                             @RenderingOverrides.Icons.Edit
+                             <input aria-label="@FileNameAriaLabel" 
+                             class="file-upload-file-name editable" 
+                             type="text"
+                             @bind-value="@RenamedFileName"/>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="file-upload-file-name">@(file.RenamedFileName ?? file.FileName)</p>
+                    }
+                }
+                else
+                {
+                    <div class="file-upload-file-errors-container">
+                        @foreach(var error in file.Errors)
+                        {
+                            <p class="file-upload-file-error">@error</p>
+                        }
+                    </div>
                 }
             </div>
-        }
-    </div>
 
-    <div class="right-content">
-        
-        @if (File.IsValid && AllowRenaming && !AllowRenamingExtension)
-        {
-            <p class="file-upload-file-extension-text"><span class="extension">@Extension</span> file</p>
-        }
-        <p>@FrontEndFile.BytesToString(File.FileSizeBytes)</p>
-        <button aria-label="@DeleteAriaLabel" class="blazor-addons-button file-upload-file-delete-button" onclick=@(() => { _ = FileUpload.DeleteFile(File); }) disabled="@File.IsDownloading">
-            @RenderingOverrides.Icons.Delete
-        </button>
-    </div>
-</div>
+            <div class="right-content">
+                @if (file.IsValid && AllowRenaming && !AllowRenamingExtension && file.RenamedFileNameExtension != string.Empty)
+                {
+                    <p class="file-upload-file-extension-text"><span class="extension">@file.RenamedFileNameExtension</span> file</p>
+                }
+                <p>@FrontEndFile.BytesToString(file.FileSizeBytes)</p>
+                <button aria-label="@DeleteAriaLabel" class="blazor-addons-button file-upload-file-delete-button" onclick=@(() => { _ = FileUpload.DeleteFile(File); }) disabled="@file.IsDownloading">
+                    @RenderingOverrides.Icons.Delete
+                </button>
+            </div>
+        </div>;
+    }
+}
 
 @code {
     [Parameter]
@@ -65,7 +73,6 @@
 
     [Parameter]
     public bool AllowRenamingExtension { get; set; } = true;
-    public bool? _AllowRenamingExtension;
 
     [Parameter]
     public EventCallback<FrontEndFile> FileRenamed { get; set; }
@@ -76,8 +83,33 @@
     [Parameter]
     public string DeleteAriaLabel { get; set; } = "Delete";
 
-    private string Renamed = string.Empty;
-    private string Extension = string.Empty;
+    [Parameter]
+    public RenderFragment<FrontEndFile> ChildContent { get; set; }
+
+    /// <summary>
+    /// If renaming is enabled, this is bound to the input field.
+    /// </summary>
+    public string RenamedFileName{
+        get => AllowRenamingExtension ? File.RenamedFileName : File.RenamedFileNameNoExtension;
+        set{
+            if (AllowRenamingExtension)
+            {
+                File.RenamedFileName = value;
+            }
+            else
+            {
+                File.RenamedFileName = File.RenamedFileNameExtension == string.Empty ? Path.GetFileNameWithoutExtension(value) : value + File.RenamedFileNameExtension;
+            }
+
+            FileUpload.Validate();
+            FileRenamed.InvokeAsync(File);
+        }
+    }
+
+    public DefaultFileRender()
+    {
+        ChildContent = DefaultRender;
+    }
 
     private double Percent = 0;
 
@@ -88,34 +120,12 @@
             _File.OnDownloadProgressMade -= DownloadProgressMade;
         }
 
-        if (File != null && _File != File)
+        if (_File != File)
         {
             File.OnDownloadProgressMade += DownloadProgressMade;
-
-            Renamed = AllowRenamingExtension ? File.FileName : File.FileNameNoExtension;
-            Extension = File.FileNameExtension;
-        }
-
-        if (_AllowRenamingExtension == null)
-        {
-            _AllowRenamingExtension = AllowRenamingExtension;
-        }
-
-        if (AllowRenamingExtension != _AllowRenamingExtension)
-        {
-            _AllowRenamingExtension = AllowRenamingExtension;
-            Renamed = AllowRenamingExtension ? Renamed + Extension : Path.GetFileNameWithoutExtension(Renamed);
         }
 
         _File = File;
-    }
-
-    private Task OnRenamed(ChangeEventArgs ev)
-    {
-        Renamed = ev.Value?.ToString() ?? string.Empty;
-        File.RenamedFileName = Renamed + (AllowRenamingExtension ? string.Empty : Extension);
-        FileUpload.Validate();
-        return FileRenamed.InvokeAsync(File);
     }
 
     public void Dispose()

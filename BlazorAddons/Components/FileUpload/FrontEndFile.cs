@@ -9,22 +9,9 @@ namespace BlazorAddons
         /// <summary>
         /// The initial name of the file.
         /// </summary>
-        public string FileName
-        {
-            get => _FileName;
-            set
-            {
-                if (_FileName != value)
-                {
-                    _FileName = value;
-                    FileNameExtension = Path.GetExtension(value);
-                    FileNameNoExtension = Path.GetFileNameWithoutExtension(value);
-                }
-            }
-        }
-        private string _FileName = default!;
-        public string FileNameExtension { get; private set; } = default!;
-        public string FileNameNoExtension { get; private set; } = default!;
+        public readonly string FileName;
+        public readonly string FileNameExtension;
+        public readonly string FileNameNoExtension;
 
         /// <summary>
         /// Contains the user-renamed file name. If the user never changed it, it will be the same as <see cref="FileName"/>.
@@ -91,20 +78,24 @@ namespace BlazorAddons
 
         internal readonly int ID;
 
-        internal FrontEndFile(FileUpload manager, string fileName, long fileSizeBytes, int id)
+        private FrontEndFile(string fileName)
+        {
+            FileName = fileName;
+            FileNameExtension = Path.GetExtension(fileName);
+            FileNameNoExtension = Path.GetFileNameWithoutExtension(fileName);
+            RenamedFileName = fileName;
+        }
+
+        internal FrontEndFile(FileUpload manager, string fileName, long fileSizeBytes, int id) : this(fileName)
         {
             Manager = manager;
-            FileName = fileName;
-            RenamedFileName = fileName;
             FileSizeBytes = fileSizeBytes;
             ID = id;
         }
 
-        public FrontEndFile(string fileName, long fileSizeBytes)
+        public FrontEndFile(string fileName, long fileSizeBytes) : this(fileName)
         {
             Manager = null;
-            FileName = fileName;
-            RenamedFileName = fileName;
             FileSizeBytes = fileSizeBytes;
             ID = 0;
         }

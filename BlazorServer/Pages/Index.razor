@@ -8,6 +8,7 @@
             FileValidation="@FileValidation"
             IncludeButton="true"
             AllowRenaming="true"
+            AllowRenamingExtension="@Toggle"
             FileDeleted="@OnFileDeleted"
             MinimumFileCount="1"
             MinimumFileCountError="You've got to add more than {0} files."
@@ -18,7 +19,12 @@
             AcceptedFiles=".dart">
 </FileUpload>
 
+
+<button @onclick="@((_) => Toggle = !Toggle)">Toggle</button>
+
 @code {
+    private bool Toggle = false;
+
     private FileUpload Instance = default!;
 
     private List<FrontEndFile> Files = new(){

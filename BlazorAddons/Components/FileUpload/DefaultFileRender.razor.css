@@ -42,7 +42,7 @@
 }
 .left-content {
     gap: 0.5rem;
-    flex-grow: 1;
+    min-width: 50%;
 }
 .right-content {
     gap: 1rem;
@@ -81,7 +81,7 @@
 
 .file-upload-rename-container {
     position: relative;
-    min-width: 50%;
+    flex-grow: 1;
 
 }
 ::deep .file-upload-rename-container svg {
