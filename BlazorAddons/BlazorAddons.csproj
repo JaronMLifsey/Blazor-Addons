@@ -22,6 +22,10 @@
     <IncludeSymbols>False</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	<VersionPrefix>0.1.0</VersionPrefix>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<Copyright>MIT</Copyright>
+	<Description>A replacement to Blazor's default InputFile component. This FileUpload component allows for uploading files across multiple file selections/drag-and-drops.</Description>
+	<PackageReleaseNotes>An early release of the FileUpload component.</PackageReleaseNotes>
   </PropertyGroup>
 
 
@@ -51,6 +55,13 @@
 
   <ItemGroup>
     <Folder Include="Components\RichTextEditor\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
