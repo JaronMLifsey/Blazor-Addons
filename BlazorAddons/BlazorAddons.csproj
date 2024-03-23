@@ -21,11 +21,13 @@
     <RepositoryType>git</RepositoryType>
     <IncludeSymbols>False</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-	<VersionPrefix>0.1.0</VersionPrefix>
+	<VersionPrefix>0.1.1</VersionPrefix>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
 	<Copyright>MIT</Copyright>
 	<Description>A replacement to Blazor's default InputFile component. This FileUpload component allows for uploading files across multiple file selections/drag-and-drops.</Description>
 	<PackageReleaseNotes>An early release of the FileUpload component.</PackageReleaseNotes>
+	<PackageLicenseFile>LICENSE</PackageLicenseFile>
+	<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
 
@@ -58,6 +60,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Include="..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
