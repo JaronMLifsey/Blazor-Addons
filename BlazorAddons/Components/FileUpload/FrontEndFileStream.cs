@@ -143,7 +143,7 @@ namespace BlazorAddons
                 {
                     CurrentBuffer = null;
                 }
-                else//This implies that bytesToCopy == count and so written will now == count
+                else//There's still some left in CurrentBuffer, but no space left in buffer (output parameter)
                 {
                     CurrentBuffer = CurrentBuffer.Value.Slice(bytesToCopy);
                 }
@@ -171,7 +171,7 @@ namespace BlazorAddons
         {
             if (totalSent != TotalReceived)
             {
-                //JSInterop is single threaded so this should never happen.;
+                //JSInterop is single threaded so this should never happen.
                 var message = "Fundamental assumption proved false - Data received out of order.";
                 Logger?.LogError(message);
                 throw new Exception(message);
@@ -208,19 +208,7 @@ namespace BlazorAddons
 
         public override int Read(byte[] buffer, int offset, int count) => throw new NotImplementedException("ReadAsync must be used instead.");
 
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            switch (origin)
-            {
-                case SeekOrigin.Begin:
-                    _Position = offset; break;
-                case SeekOrigin.Current:
-                    _Position += offset; break;
-                case SeekOrigin.End:
-                    _Position = Length - offset; break;
-            }
-            return _Position;
-        }
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotImplementedException("Seeking is not possible.");
         public override void SetLength(long value) => throw new NotImplementedException("Only reading is possible.");
         public override void Write(byte[] buffer, int offset, int count) => throw new NotImplementedException("Only reading is possible.");
 

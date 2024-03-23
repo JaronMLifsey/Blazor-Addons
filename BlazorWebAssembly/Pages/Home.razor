@@ -1,7 +1,54 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<FileUpload @ref=@Instance
+            Files="@Files"
+            FilesChanged="@OnFilesChanged"
+            Validation="@Validation"
+            FileValidation="@FileValidation"
+            IncludeButton="true"
+            AllowRenaming="true"
+            FileDeleted="@OnFileDeleted"
+            MinimumFileCount="1"
+            MinimumFileCountError="You've got to add more than {0} files."
+            MaximumFileCount="2"
+            MaximumFileSize="1000"
+            MaximumFileSizeError="{0}: don't add files bigger than {1}"
+            MaximumFileCountError="you can't add more files than {0}."
+            AcceptedFiles=".dart">
+</FileUpload>
 
-Welcome to your new app.
+@code {
+    private FileUpload Instance = default!;
+
+    private List<FrontEndFile> Files = new(){
+    };
+    private void OnFileDeleted(FrontEndFile fille)
+    {
+    }
+
+    private List<string>? Validation(IReadOnlyList<FrontEndFile> files)
+    {
+        return null;
+    }
+
+    private List<string>? FileValidation(FrontEndFile file)
+    {
+        return null;
+    }
+
+    private async Task OnFilesChanged(List<FrontEndFile> files)
+    {
+        Files = files;
+        if (!files.Any())
+        {
+            return;
+        }
+
+        var file = files.First();
+        {
+            var data = await files.First().GetAllContents();
+            int i = 0;
+        }
+    }
+}

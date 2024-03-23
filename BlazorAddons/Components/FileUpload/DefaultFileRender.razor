@@ -10,7 +10,7 @@
         }
         @if (File.IsDownloading)
         {
-            <p>@(Percent.ToString("P0"))</p>
+            <p class="file-upload-file-percent">@(Percent.ToString("P0"))</p>
         }
         @if (File.IsValid)
         {

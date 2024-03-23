@@ -1,5 +1,5 @@
 ﻿@page "/"
-@using System.Diagnostics
+
 
 <FileUpload @ref=@Instance
             Files="@Files"
@@ -22,7 +22,6 @@
     private FileUpload Instance = default!;
 
     private List<FrontEndFile> Files = new(){
-        new FrontEndFile("Test 1.txt", 1000),
     };
     private void OnFileDeleted(FrontEndFile fille)
     {
@@ -41,5 +40,13 @@
     private async Task OnFilesChanged(List<FrontEndFile> files)
     {
         Files = files;
+        if (!files.Any())
+        {
+            return;
+        }
+
+        var data = await files.First().GetAllContents();
+        string result = System.Text.Encoding.UTF8.GetString(data);
+        int i = 0;
     }
 }

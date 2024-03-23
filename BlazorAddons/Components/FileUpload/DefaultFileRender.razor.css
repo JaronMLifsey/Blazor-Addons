@@ -9,6 +9,16 @@
     border-radius: 0.25rem;
     position: relative;
 }
+.file-upload-file-percent {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 3px 3px white;
+    background-color: white;
+    border-radius: 0.333rem;
+    padding: 0 0.5rem;
+}
 .file-upload-file.invalid{
     background-color: var(--error-light);
 }
