@@ -12,10 +12,6 @@
                 {
                     @RenderingOverrides.Icons.Error
                 }
-                @if (file.IsDownloading)
-                {
-                    <p class="file-upload-file-percent">@(Percent.ToString("P0"))</p>
-                }
                 @if (file.IsValid)
                 {
                     if (AllowRenaming)
@@ -49,7 +45,14 @@
                 {
                     <p class="file-upload-file-extension-text"><span class="extension">@file.RenamedFileNameExtension</span> file</p>
                 }
-                <p>@FrontEndFile.BytesToString(file.FileSizeBytes)</p>
+                <p>
+
+                @if (file.IsDownloading)
+                {
+                    <text>@(FrontEndFile.BytesToString(file.BytesDownloaded)) / </text>
+                }
+                @FrontEndFile.BytesToString(file.FileSizeBytes)
+                </p>
                 <button aria-label="@DeleteAriaLabel" class="blazor-addons-button file-upload-file-delete-button" onclick=@(() => { _ = FileUpload.DeleteFile(File); }) disabled="@file.IsDownloading">
                     @RenderingOverrides.Icons.Delete
                 </button>

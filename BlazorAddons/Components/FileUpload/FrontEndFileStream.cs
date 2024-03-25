@@ -160,6 +160,12 @@ namespace BlazorAddons
 
             if (ReadingComplete)//Report final result.
             {
+                if (_Position != File.FileSizeBytes)
+                {
+                    var message = "Reading was completed but not all the expected data was received. This should not be possible.";
+                    Logger?.LogError(message);
+                    throw new Exception(message);
+                }
                 OnDownloadProgress?.Invoke(_Position, true);
             }
 

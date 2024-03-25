@@ -63,11 +63,10 @@ namespace BlazorAddons
         public string MaximumFileCountError { get; set; } = "More files were added than the maximum of {0}.";
 
         /// <summary>
-        /// The maximum number of files which can be added before <see cref="MaximumFileCountError"/> will be displayed.
-        /// If more than 1, the file selector which opens will allow adding multiple files.
+        /// The maximum file size in bytes which can be added before <see cref="MaximumFileSizeError"/> will be displayed.
         /// </summary>
         [Parameter]
-        public int MaximumFileSize { get; set; } = 10;
+        public int MaximumFileSize { get; set; } = 1024 * 1024 * 10;
 
         /// <summary>
         /// The error message that will be displayed if <see cref="MaximumFileSize"/> is exceeded.
