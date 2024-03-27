@@ -11,40 +11,40 @@ interface FileInfo {
 }
 
 class FileStreamer {
-    private TotalSent: number = 0;
-    private TotalAcknowledged: number = 0;
-    private DotNetStreamReceiver: any;
-    private FileInfo: FileInfo;
-    private MaxMessageSize: number;
-    private MaxBufferSize: number;
+    private totalSent: number = 0;
+    private totalAcknowledged: number = 0;
+    private dotNetStreamReceiver: any;
+    private fileInfo: FileInfo;
+    private maxMessageSize: number;
+    private maxBufferSize: number;
 
-    private StreamContinuationResolver: (value: void | PromiseLike<void>) => void | null = null;
+    private streamContinuationResolver: (value: void | PromiseLike<void>) => void | null = null;
 
     public constructor(dotNetStreamReceiver: any, fileInfo: FileInfo, maxMessageSize: number, maxBufferSize: number) {
-        this.DotNetStreamReceiver = dotNetStreamReceiver;
-        this.FileInfo = fileInfo;
-        this.MaxMessageSize = maxMessageSize;
-        this.MaxBufferSize = maxBufferSize;
+        this.dotNetStreamReceiver = dotNetStreamReceiver;
+        this.fileInfo = fileInfo;
+        this.maxMessageSize = maxMessageSize;
+        this.maxBufferSize = maxBufferSize;
     }
     
-    public GetDataSlice(): Uint8Array {
-        if (this.FileInfo.chunk.length - this.FileInfo.chunkOffset > this.MaxMessageSize) {
-            let slice = this.FileInfo.chunk.slice(this.FileInfo.chunkOffset, this.FileInfo.chunkOffset + this.MaxMessageSize);
-            this.FileInfo.chunkOffset += this.MaxMessageSize;
+    public getDataSlice(): Uint8Array {
+        if (this.fileInfo.chunk.length - this.fileInfo.chunkOffset > this.maxMessageSize) {
+            let slice = this.fileInfo.chunk.slice(this.fileInfo.chunkOffset, this.fileInfo.chunkOffset + this.maxMessageSize);
+            this.fileInfo.chunkOffset += this.maxMessageSize;
             return slice;
         }
         else {
-            let slice = this.FileInfo.chunk.slice(this.FileInfo.chunkOffset, this.FileInfo.chunk.length);
-            this.FileInfo.chunkOffset = 0;
-            this.FileInfo.chunk = null;
+            let slice = this.fileInfo.chunk.slice(this.fileInfo.chunkOffset, this.fileInfo.chunk.length);
+            this.fileInfo.chunkOffset = 0;
+            this.fileInfo.chunk = null;
             return slice;
         }
     }
 
-    public async ReadFile(reader: ReadableStreamDefaultReader, maxBytes: number): Promise<Uint8Array> {
+    public async geadFile(reader: ReadableStreamDefaultReader, maxBytes: number): Promise<Uint8Array> {
 
-        if (this.FileInfo.chunk != null) {
-            return this.GetDataSlice();
+        if (this.fileInfo.chunk != null) {
+            return this.getDataSlice();
         }
 
         let result = await reader.read();
@@ -53,35 +53,35 @@ class FileStreamer {
         }
 
         var data: Uint8Array = result.value;
-        this.FileInfo.chunk = data;
-        return this.GetDataSlice();
+        this.fileInfo.chunk = data;
+        return this.getDataSlice();
     }
 
-    public async StreamFile() {
-        let reader = this.FileInfo.file.stream().getReader();
+    public async streamFile() {
+        let reader = this.fileInfo.file.stream().getReader();
 
-        this.TotalSent = 0;
-        let remainingToSend = this.FileInfo.file.size;
+        this.totalSent = 0;
+        let remainingToSend = this.fileInfo.file.size;
         let data: Uint8Array;
-        while ((data = await this.ReadFile(reader, this.MaxMessageSize)) != null) {
-            if (this.TotalSent - this.TotalAcknowledged + data.length > this.MaxBufferSize) {
-                let blocker = new Promise<void>(resolver => this.StreamContinuationResolver = resolver);
+        while ((data = await this.geadFile(reader, this.maxMessageSize)) != null) {
+            if (this.totalSent - this.totalAcknowledged + data.length > this.maxBufferSize) {
+                let blocker = new Promise<void>(resolver => this.streamContinuationResolver = resolver);
                 await blocker;
             }
-            this.DotNetStreamReceiver.invokeMethodAsync('ReceiveData', data, this.TotalSent);
-            this.TotalSent += data.length;
+            this.dotNetStreamReceiver.invokeMethodAsync('ReceiveData', data, this.totalSent);
+            this.totalSent += data.length;
             remainingToSend -= data.length;
         }
 
         //Let .NET know there's no more data.
-        this.DotNetStreamReceiver.invokeMethodAsync('ReceiveData', null, this.TotalSent);
+        this.dotNetStreamReceiver.invokeMethodAsync('ReceiveData', null, this.totalSent);
     }
 
-    public Acknowledge(totalReceived: number) {
-        this.TotalAcknowledged = totalReceived;
+    public acknowledge(totalReceived: number) {
+        this.totalAcknowledged = totalReceived;
 
-        if (this.TotalSent - this.TotalAcknowledged + this.MaxMessageSize < this.MaxBufferSize) {
-            this.StreamContinuationResolver();
+        if (this.totalSent - this.totalAcknowledged + this.maxMessageSize < this.maxBufferSize) {
+            this.streamContinuationResolver();
         }
     }
 }
@@ -131,7 +131,7 @@ class FileUploader {
         }
     }
 
-    public async CreateStream(dotNetObj: any, fileId: number, maxMessageSize: number, maxBufferSize: number) {
+    public async createStream(dotNetObj: any, fileId: number, maxMessageSize: number, maxBufferSize: number) {
         let fileInfo = this.FileMap.get(fileId);
         if (fileInfo == null) {
             return null;
@@ -165,10 +165,10 @@ class FileUploader {
     }
 }
 
-async function CreateFileUploader(inputElement: HTMLInputElement | null, dropzoneElement: HTMLElement | null, dotNetObject: any){
+async function createFileUploader(inputElement: HTMLInputElement | null, dropzoneElement: HTMLElement | null, dotNetObject: any){
     let uploader = new FileUploader();
     await uploader.init(inputElement, dropzoneElement, dotNetObject);
     return uploader;
 }
 
-export { FileUploader, CreateFileUploader };
+export { FileUploader, createFileUploader };

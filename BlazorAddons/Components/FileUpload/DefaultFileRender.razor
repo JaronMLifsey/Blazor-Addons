@@ -45,13 +45,13 @@
                 {
                     <p class="file-upload-file-extension-text"><span class="extension">@file.RenamedFileNameExtension</span> file</p>
                 }
-                <p>
 
-                @if (file.IsDownloading)
-                {
-                    <text>@(FrontEndFile.BytesToString(file.BytesDownloaded)) / </text>
-                }
-                @FrontEndFile.BytesToString(file.FileSizeBytes)
+                <p>
+                    @if (file.IsDownloading)
+                    {
+                        <text>@(FrontEndFile.BytesToString(file.BytesDownloaded)) / </text>
+                    }
+                    @FrontEndFile.BytesToString(file.FileSizeBytes)
                 </p>
                 <button aria-label="@DeleteAriaLabel" class="blazor-addons-button file-upload-file-delete-button" onclick=@(() => { _ = FileUpload.DeleteFile(File); }) disabled="@file.IsDownloading">
                     @RenderingOverrides.Icons.Delete

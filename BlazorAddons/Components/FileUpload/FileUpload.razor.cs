@@ -108,6 +108,7 @@ namespace BlazorAddons
 
         private ElementReference? Input;
         private ElementReference? DropZone;
+        private DotNetObjectReference<FileUpload>? ThisObjectReference;
         private IJSObjectReference? Module;
         private IJSObjectReference? FileUploadJsObject;
 
@@ -132,8 +133,9 @@ namespace BlazorAddons
         {
             if (firstRender)
             {
-                Module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorAddons/FileUpload.js");
-                FileUploadJsObject = await Module.InvokeAsync<IJSObjectReference>("CreateFileUploader", Input, DropZone, DotNetObjectReference.Create(this));
+                Module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorAddons/Components/FileUpload/FileUpload.razor.js");
+                ThisObjectReference = DotNetObjectReference.Create(this);
+                FileUploadJsObject = await Module.InvokeAsync<IJSObjectReference>("createFileUploader", Input, DropZone, ThisObjectReference);
             }
         }
 
@@ -226,6 +228,10 @@ namespace BlazorAddons
                 if (Module != null)
                 {
                     await Module.DisposeAsync();
+                }
+                if (ThisObjectReference != null)
+                {
+                    ThisObjectReference.Dispose();
                 }
                 if (FileUploadJsObject != null)
                 {

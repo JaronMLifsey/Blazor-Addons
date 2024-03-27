@@ -83,7 +83,7 @@ namespace BlazorAddons
 
                 try
                 {
-                    FileStreamerJsObject = await FileUploadJsObject.InvokeAsync<IJSObjectReference>("CreateStream", ThisObjectReference, File.ID, MaxMessageSize, MaxBuffer);
+                    FileStreamerJsObject = await FileUploadJsObject.InvokeAsync<IJSObjectReference>("createStream", ThisObjectReference, File.ID, MaxMessageSize, MaxBuffer);
                 }
                 catch (Exception ex)
                 {

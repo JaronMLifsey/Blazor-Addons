@@ -21,7 +21,7 @@
     <RepositoryType>git</RepositoryType>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-	<VersionPrefix>0.1.2</VersionPrefix>
+	<VersionPrefix>0.1.3</VersionPrefix>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
 	<Copyright>MIT</Copyright>
 	<Description>A replacement to Blazor's default InputFile component. This FileUpload component allows for uploading files across multiple file selections/drag-and-drops.</Description>

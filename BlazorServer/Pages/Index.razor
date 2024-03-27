@@ -8,7 +8,7 @@
             FileValidation="@FileValidation"
             IncludeButton="true"
             AllowRenaming="true"
-            AllowRenamingExtension="@Toggle"
+            AllowRenamingExtension="@Open"
             FileDeleted="@OnFileDeleted"
             MinimumFileCount="1"
             MinimumFileCountError="You've got to add more than {0} files."
@@ -18,11 +18,19 @@
             MaximumFileCountError="you can't add more files than {0}.">
 </FileUpload>
 
+<div style="position: relative;">
+    <button @onclick="@((_) => Open = !Open)">
+        Toggle
+    </button>
 
-<button @onclick="@((_) => Toggle = !Toggle)">Toggle</button>
+    <DialogModal @bind-Open="@Open" AsModal="false" CloseOnClickOutside="true" CloseOnEscape="true">
+        <p>Test modal content</p>
+    </DialogModal>
+</div>
+
 
 @code {
-    private bool Toggle = false;
+    private bool Open = false;
 
     private FileUpload Instance = default!;
 
