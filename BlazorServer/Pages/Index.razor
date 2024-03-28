@@ -18,19 +18,23 @@
             MaximumFileCountError="you can't add more files than {0}.">
 </FileUpload>
 
-<div style="position: relative;">
+<div style="position: relative; width: 40vw; margin: auto; border: 1px solid black; padding: 2rem;">
     <button @onclick="@((_) => Open = !Open)">
         Toggle
     </button>
+    <button @onclick="@((_) => AsModal = !AsModal)">
+        AsModal
+    </button>
 
-    <DialogModal @bind-Open="@Open" AsModal="false" CloseOnClickOutside="true" CloseOnEscape="true">
-        <p>Test modal content</p>
+    <DialogModal @bind-Open="@Open" AsModal="@AsModal" CloseOnClickOutside="true" CloseOnEscape="true" Origin="(1, 0)" Transform="(0, 1)" OffsetPixels="(0, 0)">
+        <p>Test modal content. alksjdf lkasj tdelkjalsket nlasnyl naljn yhlj,satnryhn srmtynmretm nsrftnumndft mjnmsrtn,srfmtk,jmdfmgnfdghfgd n fcgjhn fy j dfh zds gh zd j dfh j cgfh kj cgh kjcg fhj.</p>
     </DialogModal>
 </div>
 
 
 @code {
     private bool Open = false;
+    private bool AsModal = false;
 
     private FileUpload Instance = default!;
 

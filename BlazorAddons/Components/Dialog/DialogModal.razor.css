@@ -1,0 +1,14 @@
+﻿
+dialog {
+    position: fixed;
+    inset-inline-start: unset;
+    inset-inline-end: unset;
+    border: unset;
+    box-shadow: 2px 2px 8px 2px rgba(0, 0, 0, 0.3);
+    border-radius: 0.5rem;
+    box-sizing: border-box;
+}
+
+dialog:focus-visible{
+    outline: unset;
+}
